@@ -2,7 +2,6 @@
 
 import bcrypt from 'bcryptjs';
 
-import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { getUserByEmail } from '@/actions/get-user';
 

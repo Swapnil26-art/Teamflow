@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
+import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/ui/icons';
-import toast from 'react-hot-toast';
 
 export function CheckoutButton() {
   const [isLoading, setIsLoading] = React.useState(false);

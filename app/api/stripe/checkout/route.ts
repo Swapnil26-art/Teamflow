@@ -38,6 +38,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[STRIPE_CHECKOUT_ERROR]', error);
     return new NextResponse('Internal Error', { status: 500 });
   }
