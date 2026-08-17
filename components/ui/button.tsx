@@ -48,6 +48,7 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
+<<<<<<< HEAD
     {
       className,
       variant,
@@ -58,6 +59,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       type = 'button',
       ...props
     },
+=======
+    { className, variant, size, asChild = false, loading, children, ...props },
+>>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
     ref,
   ) => {
     if (asChild) {
@@ -74,7 +78,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
+<<<<<<< HEAD
         type={type === 'submit' ? 'submit' : 'button'}
+=======
+        type={props.type || "button"}
+>>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={props.disabled || loading}
@@ -86,7 +94,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   },
 );
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };

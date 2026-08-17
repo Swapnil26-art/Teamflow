@@ -40,7 +40,11 @@ export async function POST(req: Request) {
       select: { order: true },
     });
 
+<<<<<<< HEAD
     const order = lastList ? lastList.order + 1 : 1;
+=======
+    const order = lastList ? lastList.order : 1;
+>>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
     const list = await db.list.create({
       data: {
         userId: session.user.id,
