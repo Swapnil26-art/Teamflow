@@ -30,7 +30,6 @@ export const getTasks = async (options?: SearchParamsOptions) => {
     };
   }
 
-<<<<<<< HEAD
   let listIdFilter: string | null | undefined;
   if (options?.unsorted) {
     listIdFilter = null;
@@ -46,24 +45,14 @@ export const getTasks = async (options?: SearchParamsOptions) => {
       ...(options?.labelId ? { labels: { some: { id: options.labelId } } } : {}),
       ...(options?.completed ? { isComplete: true } : {}),
       ...(options?.incomplete ? { isComplete: false } : {}),
-=======
-  const tasks = await db.task.findMany({
-    where: {
-      userId: session.user?.id,
-      listId: options?.listId ?? null,
-      dueDate: dueDateRange,
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
     },
     include: {
       subtasks: true,
       labels: true,
     },
-<<<<<<< HEAD
     orderBy: {
       order: 'asc',
     },
-=======
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
   });
 
   return tasks;

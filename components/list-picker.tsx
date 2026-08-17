@@ -19,11 +19,7 @@ interface ListPickerProps<T extends FieldValues> {
   form: UseFormReturn<T>;
   register: Path<T>;
   lists: List[];
-<<<<<<< HEAD
   defaultValue?: string | null;
-=======
-  defaultValue?: string;
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
 }
 
 export function ListPicker<T extends FieldValues>({

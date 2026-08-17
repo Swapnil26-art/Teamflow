@@ -7,7 +7,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
 
 export async function POST(req: Request) {
   try {
-    const origin = req.headers.get('origin') || 'http://localhost:3000';
+    const origin =
+      req.headers.get('origin') ||
+      process.env.NEXTAUTH_URL ||
+      'http://localhost:3000';
 
     if (!process.env.STRIPE_SECRET_KEY) {
       return new NextResponse('Stripe Secret Key is missing in .env', { status: 500 });

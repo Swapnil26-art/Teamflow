@@ -36,7 +36,6 @@ export default async function PageWithViews({
   const labels = await getLabels();
   const lists = await getLists();
   const tasks = await getTasks({
-<<<<<<< HEAD
     ...options,
     ...searchParams,
   });
@@ -51,11 +50,6 @@ export default async function PageWithViews({
       (!t.subtasks || !t.subtasks.some((s) => s.isComplete)),
   );
 
-=======
-    listId: options?.listId,
-    today: options?.today,
-  });
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
   switch (searchParams.view) {
     case 'board':
       return (
@@ -63,22 +57,14 @@ export default async function PageWithViews({
           <div className="space-y-2">
             <PageHeading
               color="bg-yellow-500"
-<<<<<<< HEAD
               items={newTasks}
-=======
-              items={tasks}
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
               level="h3"
               className="text-md"
             >
               New
             </PageHeading>
             <TaskList
-<<<<<<< HEAD
               tasks={newTasks}
-=======
-              tasks={tasks}
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
               lists={lists}
               labels={labels}
               type="board"
@@ -87,22 +73,14 @@ export default async function PageWithViews({
           <div className="space-y-2">
             <PageHeading
               color="bg-sky-500"
-<<<<<<< HEAD
               items={inProgressTasks}
-=======
-              items={tasks}
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
               level="h3"
               className="text-md"
             >
               In Progress
             </PageHeading>
             <TaskList
-<<<<<<< HEAD
               tasks={inProgressTasks}
-=======
-              tasks={tasks}
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
               lists={lists}
               labels={labels}
               type="board"
@@ -112,22 +90,14 @@ export default async function PageWithViews({
           <div className="space-y-2">
             <PageHeading
               color="bg-emerald-500"
-<<<<<<< HEAD
               items={completedTasks}
-=======
-              items={tasks}
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
               level="h3"
               className="text-md"
             >
               Completed
             </PageHeading>
             <TaskList
-<<<<<<< HEAD
               tasks={completedTasks}
-=======
-              tasks={tasks}
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
               lists={lists}
               labels={labels}
               type="board"

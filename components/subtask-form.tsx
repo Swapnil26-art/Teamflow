@@ -64,11 +64,7 @@ function SubtaskForm({
     } catch (err) {
       handleError(err);
     } finally {
-<<<<<<< HEAD
       setIsLoading(false);
-=======
-      setIsLoading(true);
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
     }
   };
 

@@ -25,13 +25,8 @@ export async function POST(
       select: { order: true },
     });
 
-<<<<<<< HEAD
     const order = lastSubtask ? lastSubtask.order + 1 : 1;
     const subtask = await db.subtask.create({
-=======
-    const order = lastSubtask ? lastSubtask.order : 1;
-    const list = await db.subtask.create({
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
       data: {
         userId: session.user.id,
         taskId: params.taskId,
@@ -40,11 +35,7 @@ export async function POST(
       },
     });
 
-<<<<<<< HEAD
     return NextResponse.json(subtask, { status: 200 });
-=======
-    return NextResponse.json(list, { status: 200 });
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
   } catch (error) {
     return new NextResponse('Internal server error', { status: 500 });
   }

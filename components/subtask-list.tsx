@@ -42,12 +42,7 @@ export default function SubtaskList({
         subtasks.map((subtask) => (
           <SubtaskItem key={subtask.id} task={task} subtask={subtask} />
         ))}
-<<<<<<< HEAD
       {(showSubtaskList || alwaysOpen) && <SubtaskItem task={task} />}
-=======
-      {showSubtaskList && <SubtaskItem task={task} />}
-      {alwaysOpen && <SubtaskItem task={task} />}
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
     </div>
   );
 }

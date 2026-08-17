@@ -2,11 +2,7 @@
 
 import type { Label, List } from '@/types';
 
-<<<<<<< HEAD
 const listRegex = /@\[([^)]+)\]\((?:at|cmd):([^)]+)\)/g; // @[Work](at:id) or @[Work](cmd:id)
-=======
-const listRegex = /@\[([^)]+)\]\(at:([^)]+)\)/g; // @[Work](at:b35464f9-079f-481c-6b7e-08dbf3340e69)
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
 const labelRegex = /@\[([^)]+)\]\(hash:([^)]+)\)/g;
 
 interface FormatMentionInputProps {

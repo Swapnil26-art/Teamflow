@@ -26,7 +26,6 @@ export const useSettingsStore = create(
     }),
     {
       name: 'settings-storage',
-<<<<<<< HEAD
       storage: createJSONStorage(() =>
         typeof window !== 'undefined'
           ? localStorage
@@ -36,9 +35,6 @@ export const useSettingsStore = create(
               removeItem: () => {},
             },
       ),
-=======
-      storage: createJSONStorage(() => localStorage),
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
     },
   ),
 );

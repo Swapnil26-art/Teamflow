@@ -26,10 +26,6 @@ export async function PATCH(
     const subtask = await db.subtask.update({
       where: {
         id: params.subtaskId,
-<<<<<<< HEAD
-=======
-        taskId: params.taskId,
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
       },
       data: {
         name,
@@ -63,10 +59,6 @@ export async function DELETE(
     const subtask = await db.subtask.delete({
       where: {
         id: params.subtaskId,
-<<<<<<< HEAD
-=======
-        taskId: params.taskId,
->>>>>>> 7de1e5e165c9359a96fc1fe487ab1261117b1460
       },
     });
 
