@@ -24,6 +24,7 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
     listening,
     resetTranscript,
     browserSupportsSpeechRecognition,
+    isMicrophoneAvailable,
   } = useSpeechRecognition();
 
   const router = useRouter();
@@ -38,12 +39,13 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetTranscript]);
 
-  // Sync speech transcript into the prompt input
+  // Only sync dictation transcript into the prompt while listening, so
+  // speaking never wipes text the user typed manually beforehand.
   React.useEffect(() => {
-    if (transcript) {
+    if (listening && transcript) {
       setPrompt(transcript);
     }
-  }, [transcript]);
+  }, [listening, transcript]);
 
   const onSubmitPrompt = async (promptText: string) => {
     try {
@@ -100,6 +102,32 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
     setSuggestion(null);
   };
 
+  const toggleListening = async () => {
+    if (listening) {
+      try {
+        await SpeechRecognition.stopListening();
+      } catch (error) {
+        toast.error('Could not stop voice input.');
+      }
+      return;
+    }
+    try {
+      const speechApi = SpeechRecognition as unknown as {
+        browserSupportsContinuousListening: () => boolean;
+      };
+      const supportsContinuous =
+        typeof speechApi.browserSupportsContinuousListening === 'function'
+          ? speechApi.browserSupportsContinuousListening()
+          : true;
+      await SpeechRecognition.startListening({
+        continuous: supportsContinuous,
+        interimResults: true,
+      });
+    } catch (error) {
+      toast.error('Microphone unavailable or permission denied.');
+    }
+  };
+
   return (
     <div>
       <div className="text-lg font-semibold p-4 flex-gap">
@@ -145,7 +173,12 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
           className="rounded-none "
           transparent
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => {
+            if (suggestion) {
+              setSuggestion(null);
+            }
+            setPrompt(e.target.value);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !isLoading && prompt.trim()) {
               e.preventDefault();
@@ -162,15 +195,14 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
           <div>
             {browserSupportsSpeechRecognition && (
               <Button
-                variant="destructive"
+                type="button"
                 size="sm"
-                onClick={() => {
-                  if (listening) {
-                    SpeechRecognition.stopListening();
-                  } else {
-                    SpeechRecognition.startListening({ continuous: true });
-                  }
-                }}
+                variant="secondary"
+                disabled={!isMicrophoneAvailable}
+                onClick={toggleListening}
+                title={
+                  listening ? 'Stop voice input' : 'Start voice input'
+                }
               >
                 {listening ? (
                   <Icons.Mic className="w-4 h-4" />

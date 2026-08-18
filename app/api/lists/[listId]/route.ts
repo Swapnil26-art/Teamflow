@@ -17,7 +17,14 @@ export async function PATCH(
       return new NextResponse('Unauthenticated', { status: 403 });
     }
 
-    // TODO: Authorize user
+    const existing = await db.list.findUnique({
+      where: { id: params.listId },
+      select: { userId: true },
+    });
+
+    if (!existing || existing.userId !== session.user.id) {
+      return new NextResponse('Unauthorized', { status: 403 });
+    }
 
     const { name } = await req.json();
 
@@ -49,6 +56,15 @@ export async function DELETE(
 
     if (!session || !session.user) {
       return new NextResponse('Unauthenticated', { status: 403 });
+    }
+
+    const existing = await db.list.findUnique({
+      where: { id: params.listId },
+      select: { userId: true },
+    });
+
+    if (!existing || existing.userId !== session.user.id) {
+      return new NextResponse('Unauthorized', { status: 403 });
     }
 
     const list = await db.list.delete({

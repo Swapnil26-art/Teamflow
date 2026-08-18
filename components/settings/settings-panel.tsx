@@ -3,14 +3,10 @@
 import * as React from 'react';
 
 import {
-  Cog,
   UserCircle,
-  Bell,
   Heart,
   LucideIcon,
   PanelLeft,
-  Palette,
-  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AccountForm } from '@/components/settings/account-form';
@@ -30,16 +26,6 @@ const settingsTabs: Tab[] = [
     icon: UserCircle,
   },
   {
-    id: 'general',
-    label: 'General',
-    icon: Cog,
-  },
-  {
-    id: 'reminders',
-    label: 'Reminders',
-    icon: Bell,
-  },
-  {
     id: 'preferences',
     label: 'Preferences',
     icon: Heart,
@@ -48,16 +34,6 @@ const settingsTabs: Tab[] = [
     id: 'layout',
     label: 'Layout',
     icon: PanelLeft,
-  },
-  {
-    id: 'productivity',
-    label: 'Productivity',
-    icon: Sparkles,
-  },
-  {
-    id: 'appearance',
-    label: 'Appearance',
-    icon: Palette,
   },
 ];
 

@@ -14,6 +14,18 @@ export default function TaskSuggestion({
   suggestion: PromptTask;
   onDiscard: () => void;
 }) {
+  const priority = priorities.find(
+    (p) => p.value === suggestion?.priority?.toUpperCase(),
+  );
+
+  let dueDateLabel: string | null = null;
+  if (suggestion?.dueDate) {
+    const parsedDate = new Date(suggestion.dueDate);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      dueDateLabel = format(parsedDate, 'dd MMMM, yyyy HH:mm');
+    }
+  }
+
   return (
     // eslint-disable-next-line jsx-a11y/interactive-supports-focus
     <div className="space-y-2 border p-3 rounded-md bg-background">
@@ -42,23 +54,16 @@ export default function TaskSuggestion({
         </p>
       </div>
       <div className="flex-gap">
-        {suggestion?.dueDate && (
+        {dueDateLabel && (
           <div className="flex-gap-sm text-xs text-muted-foreground">
             <Icons.Calendar className="w-3 h-3" />
-            {format(new Date(suggestion.dueDate), 'dd MMMM, yyyy HH:mm')}
+            {dueDateLabel}
           </div>
         )}
-        {suggestion?.priority && (
+        {priority && (
           <div className="flex-gap-sm text-xs text-muted-foreground">
-            <Icons.Flag
-              className="w-3 h-3"
-              style={{
-                color:
-                  priorities.find((p) => p.value === suggestion?.priority)
-                    ?.color || '#fffff',
-              }}
-            />
-            {priorities.find((p) => p.value === suggestion?.priority)?.label}
+            <Icons.Flag className="w-3 h-3" style={{ color: priority.color }} />
+            {priority.label}
           </div>
         )}
       </div>

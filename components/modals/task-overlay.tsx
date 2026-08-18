@@ -12,16 +12,11 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { fetcher, LABELS_KEY, LISTS_KEY } from '@/lib/api';
 
 export default function TaskOverlay() {
-  const [isOpen, setOpen] = React.useState(false);
   const { data: lists } = useSWR<List[]>(LISTS_KEY, fetcher);
   const { data: labels } = useSWR<Label[]>(LABELS_KEY, fetcher);
   const { showTaskOverlay, toggleTaskOverlay, setTaskOverlay } =
     useLayoutStore();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-
-  React.useEffect(() => {
-    showTaskOverlay ? setOpen(true) : setOpen(false);
-  }, [showTaskOverlay]);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -45,12 +40,9 @@ export default function TaskOverlay() {
     );
   }
 
-  // A workaround to manage drawer state since it has different behavior than the Dialog
-  const onOpenChange = () => {
-    setOpen(!isOpen);
-    if (!isOpen) {
-      setTaskOverlay(false);
-    }
+  // Keep the store and drawer state in sync so swipe/outside-click closes work
+  const onOpenChange = (open: boolean) => {
+    setTaskOverlay(open);
   };
 
   return (

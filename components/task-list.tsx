@@ -1,6 +1,9 @@
+'use client';
+
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useLayoutStore } from '@/store/layout-store';
 
 import type { Label, List, Task } from '@/types';
 
@@ -34,6 +37,8 @@ export function TaskList({
 }
 
 TaskList.Empty = function EmptyList() {
+  const toggleTaskOverlay = useLayoutStore((s) => s.toggleTaskOverlay);
+
   return (
     <div className="min-h-[50vh] flex-center">
       <div className="flex-center flex-col w-64 h-64 rounded-full p-2 m-10">
@@ -41,7 +46,7 @@ TaskList.Empty = function EmptyList() {
         <p className="text-muted-foreground text-center text-sm">
           Seems like you&apos;re totally on top of things.
         </p>
-        <Button size="sm" className="mt-2">
+        <Button size="sm" className="mt-2" onClick={toggleTaskOverlay}>
           Create task
         </Button>
       </div>

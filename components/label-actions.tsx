@@ -73,9 +73,8 @@ export default function LabelActions({ label, setOpen }: LabelActionsProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={async () => onDelete(label.id)}
+            onClick={() => setIsOpen(true)}
             className="text-destructive"
-            onSelect={(e) => e.preventDefault()}
           >
             <Icons.Trash className="mr-2 h-3 w-3" />
             Delete

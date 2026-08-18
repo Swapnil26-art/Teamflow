@@ -152,13 +152,7 @@ export default function TaskForm({
 
   // TODO: Figure out sharing and updates state fx. list and labels
 
-  const [nameValue, setNameValue] = React.useState(form.getValues('name') || '');
-  React.useEffect(() => {
-    const subscription = form.watch((value) => {
-      setNameValue(value.name || '');
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+  const nameValue = form.watch('name');
 
   const onCancel = () => {
     close && close();
@@ -224,7 +218,7 @@ export default function TaskForm({
             >
               {small ? <Icons.Close className="w-4 h-4" /> : 'Cancel'}
             </Button>
-            <Button size="sm" disabled={!nameValue || isLoading}>
+            <Button size="sm" type="submit" disabled={!nameValue || isLoading}>
               {(small && <Icons.Send className="w-4 h-4" />) ||
                 (task ? 'Save changes' : 'Create task')}
             </Button>

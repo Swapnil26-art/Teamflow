@@ -7,12 +7,14 @@ export type PromptTask = Pick<
   'name' | 'description' | 'dueDate' | 'priority'
 > & { dueDate: string | null };
 
+const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'];
+
 export async function sendPrompt(userInput: string) {
   if (!userInput || !userInput.trim()) {
     throw new Error('Prompt cannot be empty');
   }
 
-  const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error(
       'AI API key is not configured. Please add GROQ_API_KEY to your .env file.',
@@ -21,7 +23,7 @@ export async function sendPrompt(userInput: string) {
 
   try {
     const Groq = (await import('groq-sdk')).default;
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || apiKey });
+    const groq = new Groq({ apiKey });
 
     const prompt = `You are a helpful task organizer assistant. Create a task object based on the user's input: "${userInput}".
 Rephrase and enhance the task name and description to be professional, actionable, and clear.
@@ -54,11 +56,33 @@ You MUST respond with a valid JSON object matching this schema:
       .trim();
 
     const parsed = JSON.parse(cleaned) as PromptTask;
+
+    // Sanitize the model output so invalid dates / priorities never
+    // crash the UI or Prisma with enum/date errors.
+    let dueDate: string | null = null;
+    if (parsed.dueDate) {
+      const parsedDate = new Date(parsed.dueDate);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        dueDate = parsedDate.toISOString();
+      }
+    }
+
+    const priority =
+      typeof parsed.priority === 'string' &&
+      PRIORITIES.includes(parsed.priority.toUpperCase())
+        ? (parsed.priority.toUpperCase() as PromptTask['priority'])
+        : null;
+
     return {
-      name: parsed.name || userInput,
-      description: parsed.description || null,
-      dueDate: parsed.dueDate || null,
-      priority: parsed.priority || null,
+      name: typeof parsed.name === 'string' && parsed.name.trim()
+        ? parsed.name.trim()
+        : userInput,
+      description:
+        typeof parsed.description === 'string' && parsed.description.trim()
+          ? parsed.description.trim()
+          : null,
+      dueDate,
+      priority,
     } as PromptTask;
   } catch (error: any) {
     if (error?.status === 401 || error?.message?.includes('API key')) {

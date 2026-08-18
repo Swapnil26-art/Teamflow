@@ -175,7 +175,17 @@ export function DatePicker<T extends FieldValues>({
         </PopoverTrigger>
       );
     }
-    return null;
+    return (
+      <PopoverTrigger
+        className={cn(
+          buttonVariants({ variant: 'picker', size: 'icon' }),
+          'w-fit px-1',
+        )}
+      >
+        <Icons.Calendar className="h-3 w-3 mr-1" />
+        <span className="text-xs text-muted-foreground">Add date</span>
+      </PopoverTrigger>
+    );
   });
 
   const FormPopoverTrigger = React.memo(() => (
@@ -186,7 +196,13 @@ export function DatePicker<T extends FieldValues>({
       {value ? (
         <span className="flex-gap">
           {format(value, 'dd-MM-yyyy')}
-          <Icons.Close className="h-4 w-4" onClick={onRemove} />
+          <Icons.Close
+            className="h-4 w-4"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+          />
         </span>
       ) : (
         !small && <span>Schedule</span>

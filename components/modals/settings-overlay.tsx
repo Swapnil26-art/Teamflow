@@ -1,7 +1,5 @@
 'use client';
 
-import * as React from 'react';
-
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 
@@ -11,14 +9,9 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import SettingsPanel from '@/components/settings/settings-panel';
 
 export default function SettingsOverlay() {
-  const [isOpen, setOpen] = React.useState(false);
   const { showSettingsOverlay, toggleSettingsOverlay, setSettingsOverlay } =
     useLayoutStore();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-
-  React.useEffect(() => {
-    showSettingsOverlay ? setOpen(true) : setOpen(false);
-  }, [showSettingsOverlay]);
 
   if (isDesktop) {
     return (
@@ -30,16 +23,13 @@ export default function SettingsOverlay() {
     );
   }
 
-  // A workaround to manage drawer state since it has different behavior than the Dialog
-  const onOpenChange = () => {
-    setOpen(!isOpen);
-    if (!isOpen) {
-      setSettingsOverlay(false);
-    }
+  // Keep the store and drawer state in sync so swipe/outside-click closes work
+  const onOpenChange = (open: boolean) => {
+    setSettingsOverlay(open);
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
+    <Drawer open={showSettingsOverlay} onOpenChange={onOpenChange}>
       <DrawerContent>
         <div className="max-h-screen overflow-y-auto">
           <SettingsPanel />

@@ -74,9 +74,8 @@ export default function SubtaskActions({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={async () => onDelete(subtask.id)}
+            onClick={() => setIsOpen(true)}
             className="text-destructive"
-            onSelect={(e) => e.preventDefault()}
           >
             <Icons.Trash className="mr-2 h-3 w-3" />
             Delete

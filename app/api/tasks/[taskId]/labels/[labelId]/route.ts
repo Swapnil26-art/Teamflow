@@ -19,16 +19,21 @@ export async function POST(
   }
 
   try {
-    // Check if the task and label exist
+    // Check if the task belongs to the user and label exists
     const existingTask = await db.task.findUnique({
       where: { id: params.taskId },
+      select: { userId: true },
     });
 
     const existingLabel = await db.label.findUnique({
       where: { id: params.labelId },
     });
 
-    if (!existingTask || !existingLabel) {
+    if (
+      !existingTask ||
+      existingTask.userId !== session.user.id ||
+      !existingLabel
+    ) {
       return new NextResponse('Task or Label not found', { status: 404 });
     }
 
@@ -67,9 +72,20 @@ export async function DELETE(
 
     const existingLabel = await db.label.findUnique({
       where: { id: params.labelId },
+      select: { userId: true },
     });
 
-    if (!existingLabel) {
+    const existingTask = await db.task.findUnique({
+      where: { id: params.taskId },
+      select: { userId: true },
+    });
+
+    if (
+      !existingLabel ||
+      existingLabel.userId !== session.user.id ||
+      !existingTask ||
+      existingTask.userId !== session.user.id
+    ) {
       return new NextResponse('Label not found', { status: 404 });
     }
 

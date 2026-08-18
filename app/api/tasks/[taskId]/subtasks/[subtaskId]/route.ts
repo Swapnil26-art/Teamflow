@@ -19,7 +19,14 @@ export async function PATCH(
       return new NextResponse('Unauthenticated', { status: 403 });
     }
 
-    // TODO: Authorize user
+    const existing = await db.subtask.findUnique({
+      where: { id: params.subtaskId },
+      select: { userId: true },
+    });
+
+    if (!existing || existing.userId !== session.user.id) {
+      return new NextResponse('Unauthorized', { status: 403 });
+    }
 
     const { name, isComplete } = await req.json();
 
@@ -54,6 +61,15 @@ export async function DELETE(
 
     if (!session || !session.user) {
       return new NextResponse('Unauthenticated', { status: 403 });
+    }
+
+    const existing = await db.subtask.findUnique({
+      where: { id: params.subtaskId },
+      select: { userId: true },
+    });
+
+    if (!existing || existing.userId !== session.user.id) {
+      return new NextResponse('Unauthorized', { status: 403 });
     }
 
     const subtask = await db.subtask.delete({

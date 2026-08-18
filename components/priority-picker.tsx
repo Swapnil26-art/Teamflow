@@ -161,7 +161,13 @@ export function PriorityPicker<T extends FieldValues>({
         {value && (
           <span className="flex-gap">
             {value}
-            <Icons.Close className="w-4 h-4" onClick={onRemove} />
+            <Icons.Close
+              className="w-4 h-4"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            />
           </span>
         )}
       </PopoverTrigger>
