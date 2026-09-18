@@ -29,6 +29,7 @@ import { cn } from '@/lib/util/tw-merge';
 import { config } from '@/lib/config';
 import { useLayoutStore } from '@/store/layout-store';
 import { useSettingsStore } from '@/store/settings-store';
+import { useTaskStore } from '@/store/modal-store';
 import type { List } from '@/types';
 import type { SidebarItem } from '@/lib/constants';
 import { useMounted } from '@/hooks/use-mounted';
@@ -41,6 +42,7 @@ export default function SideNav() {
   const isMounted = useMounted();
   const { showLeftSidebar, toggleTaskOverlay } = useLayoutStore();
   const { settings, setSettings } = useSettingsStore();
+  const clearTask = useTaskStore((s) => s.clearTask);
   const { data: lists, error } = useSWR<List[]>('/api/lists', fetcher);
 
   React.useEffect(() => {
@@ -48,7 +50,7 @@ export default function SideNav() {
     const dW = Object.values(widgetItems).map((i) => i.id);
     const dS = Object.values(sidebarItems).map((i) => i.id);
 
-    if (!settings.sidebar || !settings.widgets)
+    if (!settings.sidebar?.length || !settings.widgets?.length)
       setSettings({ ...settings, sidebar: dS, widgets: dW });
   }, [settings, setSettings]);
 
@@ -67,7 +69,10 @@ export default function SideNav() {
             variant={showLeftSidebar ? 'secondary' : 'default'}
             size="sm"
             className="flex justify-start px-2 w-full"
-            onClick={toggleTaskOverlay}
+            onClick={() => {
+              clearTask();
+              toggleTaskOverlay();
+            }}
           >
             <div className="bg-primary rounded-full p-1 ml-0.5 hover:bg-transparent">
               <Icons.Add className="h-3 w-3 text-white" />

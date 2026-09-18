@@ -30,6 +30,7 @@ yarn-error.log*
 .env*.local
 .env
 notes.txt
+dev.log
 
 # vercel
 .vercel

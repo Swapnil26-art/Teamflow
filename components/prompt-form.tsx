@@ -65,6 +65,11 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
         });
       } else {
         const result = await sendPrompt(promptText);
+        if (!result.usedAi) {
+          toast(
+            'AI API key is not configured — generated the task with the built-in parser.',
+          );
+        }
         setSuggestion(result);
         setPrompt('');
       }

@@ -8,6 +8,7 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import TaskForm from '@/components/task-form';
 
 import { useLayoutStore } from '@/store/layout-store';
+import { useTaskStore } from '@/store/modal-store';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { fetcher, LABELS_KEY, LISTS_KEY } from '@/lib/api';
 
@@ -16,25 +17,31 @@ export default function TaskOverlay() {
   const { data: labels } = useSWR<Label[]>(LABELS_KEY, fetcher);
   const { showTaskOverlay, toggleTaskOverlay, setTaskOverlay } =
     useLayoutStore();
+  const { task, clearTask } = useTaskStore();
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'q' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
+        clearTask();
         toggleTaskOverlay();
       }
     };
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, [toggleTaskOverlay]);
+  }, [toggleTaskOverlay, clearTask]);
 
   if (isDesktop) {
     return (
       <Dialog open={showTaskOverlay} onOpenChange={toggleTaskOverlay} modal>
         <DialogContent className="max-w-xl h-fit overflow-y-auto max-h-screen">
-          <TaskForm lists={lists || []} labels={labels || []} />
+          <TaskForm
+            lists={lists || []}
+            labels={labels || []}
+            task={task || undefined}
+          />
         </DialogContent>
       </Dialog>
     );
@@ -49,7 +56,11 @@ export default function TaskOverlay() {
     <Drawer open={showTaskOverlay} onOpenChange={onOpenChange}>
       <DrawerContent>
         <div className="max-h-screen overflow-y-auto">
-          <TaskForm lists={lists || []} labels={labels || []} />
+          <TaskForm
+            lists={lists || []}
+            labels={labels || []}
+            task={task || undefined}
+          />
         </div>
       </DrawerContent>
     </Drawer>

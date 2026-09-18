@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+import { sidebarItems, widgetItems } from '@/lib/constants';
 import type { SidebarItem, WidgetItem } from '@/lib/constants';
 
 type Mode = 'light' | 'dark';
@@ -19,7 +20,11 @@ interface SettingsStore {
 export const useSettingsStore = create(
   persist<SettingsStore>(
     (set, get) => ({
-      settings: { theme: 'dark' as Mode, sidebar: [], widgets: [] },
+      settings: {
+        theme: 'dark' as Mode,
+        sidebar: sidebarItems.map((item) => item.id),
+        widgets: widgetItems.map((item) => item.id),
+      },
       setSettings: (settings: Settings) => {
         set({ settings });
       },

@@ -5,7 +5,10 @@ export type Task = PrismaTask & {
   subtasks?: Subtask[];
 };
 
-export type TaskEntry = Partial<PrismaTask> & { name: string };
+export type TaskEntry = Omit<Partial<PrismaTask>, 'dueDate'> & {
+  name: string;
+  dueDate?: Date | string | null;
+};
 export type SubtaskEntry = Partial<Subtask> & { name: string };
 export type LabelEntry = Partial<Label> & { name: string };
 export type { User, List, Label, Subtask, TaskPriority } from '@prisma/client';

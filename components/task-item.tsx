@@ -16,6 +16,7 @@ import { DatePicker } from './date-picker';
 import type { Label, List, Task } from '@/types';
 import { cn } from '@/lib/util/tw-merge';
 import { useTaskStore } from '@/store/modal-store';
+import { useLayoutStore } from '@/store/layout-store';
 
 interface TaskItemProps {
   task?: Task;
@@ -29,6 +30,7 @@ function TaskItem({ task, lists, type = 'list', labels, date }: TaskItemProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [openSubtasks, setOpenSubtasks] = React.useState(false);
   const { setTask } = useTaskStore();
+  const { toggleTaskOverlay } = useLayoutStore();
 
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);
@@ -37,6 +39,7 @@ function TaskItem({ task, lists, type = 'list', labels, date }: TaskItemProps) {
 
   const onSelectTask = (task: Task) => {
     setTask(task);
+    toggleTaskOverlay();
   };
 
   if (isOpen) {

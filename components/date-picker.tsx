@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 import { Armchair, CalendarCheck2, CircleSlash, Sunset } from 'lucide-react';
 import { FieldValues, PathValue, Path, UseFormReturn } from 'react-hook-form';
-import { addDays, format, formatDistance, isBefore } from 'date-fns';
+import { addDays, format, formatDistance, isBefore, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
 import { Icons } from '@/components/ui/icons';
@@ -51,7 +51,7 @@ export function DatePicker<T extends FieldValues>({
 
   if (defaultValue) {
     if (typeof defaultValue === 'string') {
-      defaultDate = new Date(defaultValue);
+      defaultDate = parseISO(defaultValue);
     } else {
       defaultDate = defaultValue;
     }

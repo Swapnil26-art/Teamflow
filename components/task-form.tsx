@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { add } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { useLayoutStore } from '@/store/layout-store';
 import { handleError } from '@/lib/util/error';
 import type { Label, List, Task } from '@/types';
@@ -62,7 +62,7 @@ export default function TaskForm({
         return new Date();
       }
       if (initialValues?.dueDate) {
-        return new Date(initialValues.dueDate);
+        return parseISO(initialValues.dueDate);
       }
       return undefined;
     })(),
@@ -118,16 +118,9 @@ export default function TaskForm({
 
         toast.success('Task updated.');
       } else {
-        // Adding date to default value since it goes to previous day
-        let realDate = data.dueDate ?? undefined;
-
-        if (initialValues?.dueDate) {
-          realDate = add(new Date(initialValues.dueDate), { days: 1 });
-        }
-
         const createdTask = await TaskService.createTask({
           ...data,
-          dueDate: realDate as Date | null | undefined,
+          dueDate: (data.dueDate as Date | null | undefined) ?? undefined,
         });
 
         if (data.labelIds?.length) {

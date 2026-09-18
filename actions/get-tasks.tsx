@@ -23,11 +23,14 @@ export const getTasks = async (options?: SearchParamsOptions) => {
       lt: tomorrow.toISOString(),
     };
   } else if (options?.dueDate) {
-    const customDate = startOfDay(parseISO(options.dueDate));
-    dueDateRange = {
-      gte: customDate.toISOString(),
-      lt: startOfDay(addDays(customDate, 1)).toISOString(),
-    };
+    const customDate = parseISO(options.dueDate);
+    if (!Number.isNaN(customDate.getTime())) {
+      const dayStart = startOfDay(customDate);
+      dueDateRange = {
+        gte: dayStart.toISOString(),
+        lt: startOfDay(addDays(dayStart, 1)).toISOString(),
+      };
+    }
   }
 
   let listIdFilter: string | null | undefined;

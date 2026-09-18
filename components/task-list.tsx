@@ -4,6 +4,7 @@ import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useLayoutStore } from '@/store/layout-store';
+import { useTaskStore } from '@/store/modal-store';
 
 import type { Label, List, Task } from '@/types';
 
@@ -38,6 +39,7 @@ export function TaskList({
 
 TaskList.Empty = function EmptyList() {
   const toggleTaskOverlay = useLayoutStore((s) => s.toggleTaskOverlay);
+  const clearTask = useTaskStore((s) => s.clearTask);
 
   return (
     <div className="min-h-[50vh] flex-center">
@@ -46,7 +48,14 @@ TaskList.Empty = function EmptyList() {
         <p className="text-muted-foreground text-center text-sm">
           Seems like you&apos;re totally on top of things.
         </p>
-        <Button size="sm" className="mt-2" onClick={toggleTaskOverlay}>
+        <Button
+          size="sm"
+          className="mt-2"
+          onClick={() => {
+            clearTask();
+            toggleTaskOverlay();
+          }}
+        >
           Create task
         </Button>
       </div>
