@@ -33,12 +33,9 @@ export default async function PageWithViews({
   content,
   options,
 }: PageWithViewsProps) {
-  const labels = await getLabels();
-  const lists = await getLists();
-  const tasks = await getTasks({
-    ...options,
-    ...searchParams,
-  });
+  const labels = (await getLabels()) || [];
+  const lists = (await getLists()) || [];
+  const tasks = (await getTasks({...options, ...searchParams})) || [];
 
   const completedTasks = tasks.filter((t) => t.isComplete);
   const inProgressTasks = tasks.filter(

@@ -25,8 +25,8 @@ interface UpcomingPageProps {
 export default async function UpcomingPage({
   searchParams,
 }: UpcomingPageProps) {
-  const labels = await getLabels();
-  const lists = await getLists();
+  const labels = (await getLabels()) || [];
+  const lists = (await getLists()) || [];
 
   const offset = searchParams.offset ?? 0;
   const currentDayOfWeek = getDay(new Date());

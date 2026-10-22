@@ -1,15 +1,13 @@
-import { redirect } from 'next/navigation';
 import { startOfDay, addDays, parseISO } from 'date-fns';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import { LOGIN_PATH } from '@/routes';
 import { SearchParamsOptions } from '@/lib/util/filter';
 
 export const getTasks = async (options?: SearchParamsOptions) => {
   const session = await auth();
 
   if (!session || !session.user) {
-    redirect(LOGIN_PATH);
+    return null;
   }
 
   const today = startOfDay(new Date());
