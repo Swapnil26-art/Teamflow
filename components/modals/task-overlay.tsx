@@ -45,6 +45,7 @@ export default function TaskOverlay() {
           {hasFetchError && (
             <p className="text-error text-sm mt-4">
               Failed to load lists and labels. Please <button
+                type="button"
                 onClick={() => toggleTaskOverlay()}
                 className="text-error underline"
               >
@@ -80,6 +81,7 @@ export default function TaskOverlay() {
           {hasFetchError && (
             <p className="text-error text-sm mt-4">
               Failed to load lists and labels. Please <button
+                type="button"
                 onClick={() => toggleTaskOverlay()}
                 className="text-error underline"
               >
