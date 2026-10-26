@@ -125,6 +125,7 @@ export default function TaskActions({
         onClose={() => setShowModal(false)}
         onConfirm={() => onDelete(task.id)}
         loading={isLoading}
+        description="Deleting this task will permanently remove it and all associated data."
       />
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>

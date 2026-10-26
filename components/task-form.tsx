@@ -133,6 +133,7 @@ export default function TaskForm({
 
         toast.success('Task created.');
       }
+
       router.refresh();
       close && close();
       closeTaskOverlay();

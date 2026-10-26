@@ -13,12 +13,14 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { fetcher, LABELS_KEY, LISTS_KEY } from '@/lib/api';
 
 export default function TaskOverlay() {
-  const { data: lists } = useSWR<List[]>(LISTS_KEY, fetcher);
-  const { data: labels } = useSWR<Label[]>(LABELS_KEY, fetcher);
+  const { data: lists, error: listsError } = useSWR<List[]>(LISTS_KEY, fetcher);
+  const { data: labels, error: labelsError } = useSWR<Label[]>(LABELS_KEY, fetcher);
   const { showTaskOverlay, toggleTaskOverlay, setTaskOverlay } =
     useLayoutStore();
   const { task, clearTask } = useTaskStore();
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const hasFetchError = listsError || labelsError;
+  const isLoading = !lists && !labels && !listsError && !labelsError;
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -37,11 +39,28 @@ export default function TaskOverlay() {
     return (
       <Dialog open={showTaskOverlay} onOpenChange={toggleTaskOverlay} modal>
         <DialogContent className="max-w-xl h-fit overflow-y-auto max-h-screen">
-          <TaskForm
-            lists={lists || []}
-            labels={labels || []}
-            task={task || undefined}
-          />
+          {isLoading && (
+            <p className="text-sm mt-4">Loading lists and labels...</p>
+          )}
+          {hasFetchError && (
+            <p className="text-error text-sm mt-4">
+              Failed to load lists and labels. Please <a
+                href="#"
+                onClick={() => toggleTaskOverlay()}
+                className="text-error underline"
+              >
+                refresh
+              </a>
+              to try again.
+            </p>
+          )}
+          {(!isLoading && !hasFetchError) && (
+            <TaskForm
+              lists={lists || []}
+              labels={labels || []}
+              task={task || undefined}
+            />
+          )}
         </DialogContent>
       </Dialog>
     );
@@ -56,11 +75,28 @@ export default function TaskOverlay() {
     <Drawer open={showTaskOverlay} onOpenChange={onOpenChange}>
       <DrawerContent>
         <div className="max-h-screen overflow-y-auto">
-          <TaskForm
-            lists={lists || []}
-            labels={labels || []}
-            task={task || undefined}
-          />
+          {isLoading && (
+            <p className="text-sm mt-4">Loading lists and labels...</p>
+          )}
+          {hasFetchError && (
+            <p className="text-error text-sm mt-4">
+              Failed to load lists and labels. Please <a
+                href="#"
+                onClick={() => toggleTaskOverlay()}
+                className="text-error underline"
+              >
+                refresh
+              </a>
+              to try again.
+            </p>
+          )}
+          {(!isLoading && !hasFetchError) && (
+            <TaskForm
+              lists={lists || []}
+              labels={labels || []}
+              task={task || undefined}
+            />
+          )}
         </div>
       </DrawerContent>
     </Drawer>
