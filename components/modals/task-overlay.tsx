@@ -44,13 +44,12 @@ export default function TaskOverlay() {
           )}
           {hasFetchError && (
             <p className="text-error text-sm mt-4">
-              Failed to load lists and labels. Please <a
-                href="#"
+              Failed to load lists and labels. Please <button
                 onClick={() => toggleTaskOverlay()}
                 className="text-error underline"
               >
                 refresh
-              </a>
+              </button>
               to try again.
             </p>
           )}
@@ -80,13 +79,12 @@ export default function TaskOverlay() {
           )}
           {hasFetchError && (
             <p className="text-error text-sm mt-4">
-              Failed to load lists and labels. Please <a
-                href="#"
+              Failed to load lists and labels. Please <button
                 onClick={() => toggleTaskOverlay()}
                 className="text-error underline"
               >
                 refresh
-              </a>
+              </button>
               to try again.
             </p>
           )}
