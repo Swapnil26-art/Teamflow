@@ -20,6 +20,8 @@ export default function PromptMenu({ ...props }) {
         variant="secondary"
         size="sm"
         onClick={() => setOpen(true)}
+        title="Generate a task with AI"
+        aria-label="Generate a task with AI"
         {...props}
         className={cn('', !showLeftSidebar && 'md:hidden')}
       >
@@ -27,7 +29,7 @@ export default function PromptMenu({ ...props }) {
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <PromptForm />
+          <PromptForm onClose={() => setOpen(false)} />
         </DialogContent>
       </Dialog>
     </>

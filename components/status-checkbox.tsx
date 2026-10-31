@@ -23,61 +23,55 @@ export default function StatusCheckbox({
   className,
   disabled,
 }: StatusCheckboxProps) {
-  const [isCompleted, setIsCompleted] = React.useState(
-    task?.isComplete || subtask?.isComplete || false,
-  );
+  const initialValue = subtask
+    ? subtask.isComplete
+    : (task?.isComplete ?? false);
+
+  const [isCompleted, setIsCompleted] = React.useState(initialValue);
+  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
 
-  if (!task && !subtask)
+  // Keep the checkbox in sync when fresh data arrives from the server.
+  React.useEffect(() => {
+    setIsCompleted(initialValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtask?.id, subtask?.isComplete, task?.id, task?.isComplete]);
+
+  if (!task && !subtask) {
     return <Checkbox className={className} disabled={disabled} />;
+  }
 
   const onToggleStatus = async () => {
+    if (!task && !subtask) return;
+
+    const updatedStatus = !isCompleted;
+    const previousStatus = isCompleted;
+
+    // Optimistic update: flip instantly so the checkbox never feels stuck.
+    setIsCompleted(updatedStatus);
+    setIsLoading(true);
+
     try {
-      const updatedStatus = !isCompleted;
-
       if (task && !subtask) {
-        // Ensure a complete task with subtasks doesn't have completed subtasks
-        /*
-        const hasCompletedSubtasks =
-          task.subtasks &&
-          task.subtasks.length > 0 &&
-          task.subtasks.every((subtask) => subtask.isCompleted);
-
-        if (isCompleted && hasCompletedSubtasks) {
-          throw new Error(
-            'To mark this task as incomplete, uncheck a subtask.',
-          );
-        }
-
-        // Ensure an incomplete task with incomplete tasks doesn't get marked as done
-        const hasIncompleteSubtasks = task.subtasks?.some(
-          (subtask) => !subtask.isCompleted,
-        );
-
-        if (!isCompleted && hasIncompleteSubtasks) {
-          throw new Error('You have unfinished subtasks.');
-        }
-        */
-
         await TaskService.updateTask(task.id, {
-          ...task,
-          isComplete: !!updatedStatus,
+          isComplete: updatedStatus,
         });
       } else if (subtask && task) {
         await SubtaskService.updateSubtask(task.id, subtask.id, {
-          ...subtask,
           isComplete: updatedStatus,
         });
       }
 
-      if (!isCompleted) {
+      if (updatedStatus) {
         toast.success(task ? 'Task completed!' : 'Subtask completed!');
       }
 
-      setIsCompleted(updatedStatus);
       router.refresh();
     } catch (error) {
+      setIsCompleted(previousStatus);
       handleError(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -90,8 +84,9 @@ export default function StatusCheckbox({
   return (
     <Checkbox
       checked={isCompleted}
+      disabled={disabled || isLoading}
       onCheckedChange={onToggleStatus}
-      className={priorityClassnames[task?.priority || '']}
+      className={`${priorityClassnames[task?.priority || ''] || ''} ${className || ''}`}
     />
   );
 }

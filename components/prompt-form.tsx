@@ -16,9 +16,16 @@ import { PromptTask, sendPrompt } from '@/lib/util/open-ai';
 import TaskSuggestion, { taskSuggestions } from '@/components/task-suggestion';
 import { Icons } from '@/components/ui/icons';
 import { TaskService } from '@/services/task-service';
+import { handleError } from '@/lib/util/error';
 import { Badge } from './ui/badge';
 
-export default function PromptForm({ preview }: { preview?: boolean }) {
+export default function PromptForm({
+  preview,
+  onClose,
+}: {
+  preview?: boolean;
+  onClose?: () => void;
+}) {
   const {
     transcript,
     listening,
@@ -32,24 +39,62 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [suggestion, setSuggestion] = React.useState<PromptTask | null>(null);
 
+  // Text that existed before the user hit record. Dictation is appended to
+  // it instead of replacing what they already typed.
+  const promptBeforeDictation = React.useRef('');
+
   const onClear = React.useCallback(() => {
     setSuggestion(null);
     setPrompt('');
+    promptBeforeDictation.current = '';
     resetTranscript();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetTranscript]);
 
-  // Only sync dictation transcript into the prompt while listening, so
-  // speaking never wipes text the user typed manually beforehand.
+  // Sync dictation into the prompt while listening, so interim results show
+  // up live and the final transcript is kept once recognition stops.
   React.useEffect(() => {
-    if (listening && transcript) {
-      setPrompt(transcript);
-    }
+    if (!listening || !transcript) return;
+
+    const combined = [promptBeforeDictation.current, transcript]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    setPrompt(combined);
   }, [listening, transcript]);
 
+  const stopListening = React.useCallback(async () => {
+    try {
+      await SpeechRecognition.stopListening();
+    } catch {
+      // Ignore: the browser may already have stopped the recognizer.
+    }
+  }, []);
+
+  // Release the microphone when the dialog unmounts.
+  React.useEffect(
+    () => () => {
+      SpeechRecognition.abortListening().catch(() => {});
+    },
+    [],
+  );
+
   const onSubmitPrompt = async (promptText: string) => {
+    const value = promptText.trim();
+
+    if (!value) {
+      toast.error('Please describe the task first.');
+      return;
+    }
+
+    if (listening) {
+      await stopListening();
+    }
+
     try {
       setIsLoading(true);
+
       if (preview) {
         setPrompt('Go to the grocery store');
         await new Promise<void>((resolve) => {
@@ -61,24 +106,25 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
               priority: 'MEDIUM',
             });
             resolve();
-          }, 1000);
+          }, 700);
         });
-      } else {
-        const result = await sendPrompt(promptText);
-        if (!result.usedAi) {
-          toast(
-            'AI API key is not configured — generated the task with the built-in parser.',
-          );
-        }
-        setSuggestion(result);
-        setPrompt('');
+        return;
       }
+
+      const { timeZone } = Intl.DateTimeFormat().resolvedOptions();
+      const result = await sendPrompt(value, timeZone);
+
+      if (!result.usedAi) {
+        toast(
+          'AI is not configured (or unreachable) — created the task with the built-in parser.',
+        );
+      }
+
+      setSuggestion(result);
+      setPrompt('');
+      resetTranscript();
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error('Oops. Something went wrong.');
-      }
+      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -88,16 +134,24 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
     if (!suggestion || preview) {
       onClear();
       toast.success('Task created!');
+      onClose?.();
       return;
     }
+
     setIsLoading(true);
     try {
-      await TaskService.createTask(suggestion);
+      await TaskService.createTask({
+        name: suggestion.name,
+        description: suggestion.description ?? null,
+        dueDate: suggestion.dueDate ?? null,
+        priority: suggestion.priority ?? null,
+      });
       toast.success('Task created!');
       onClear();
       router.refresh();
+      onClose?.();
     } catch (error) {
-      toast.error('Oops. Something went wrong.');
+      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -109,29 +163,41 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
 
   const toggleListening = async () => {
     if (listening) {
-      try {
-        await SpeechRecognition.stopListening();
-      } catch (error) {
-        toast.error('Could not stop voice input.');
-      }
+      await stopListening();
       return;
     }
+
+    if (!browserSupportsSpeechRecognition) {
+      toast.error(
+        'Voice input is not supported in this browser. Try Chrome, Edge or Safari.',
+      );
+      return;
+    }
+
+    if (isMicrophoneAvailable === false) {
+      toast.error(
+        'Microphone access is blocked. Allow it in your browser settings and try again.',
+      );
+      return;
+    }
+
+    promptBeforeDictation.current = prompt.trim();
+    resetTranscript();
+
     try {
-      const speechApi = SpeechRecognition as unknown as {
-        browserSupportsContinuousListening: () => boolean;
-      };
-      const supportsContinuous =
-        typeof speechApi.browserSupportsContinuousListening === 'function'
-          ? speechApi.browserSupportsContinuousListening()
-          : true;
       await SpeechRecognition.startListening({
-        continuous: supportsContinuous,
+        continuous: true,
         interimResults: true,
+        language: navigator.language || 'en-US',
       });
-    } catch (error) {
-      toast.error('Microphone unavailable or permission denied.');
+    } catch {
+      toast.error(
+        'Microphone unavailable or permission denied. Check your browser permissions.',
+      );
     }
   };
+
+  const sendDisabled = isLoading || (!suggestion && !prompt.trim());
 
   return (
     <div>
@@ -174,27 +240,41 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
       <Separator />
       <div className="m-2 mb-0 rounded-sm flex items-center border bg-background">
         <Input
-          placeholder="Write prompt..."
-          className="rounded-none "
+          placeholder={listening ? 'Listening…' : 'Write prompt...'}
+          className="rounded-none"
           transparent
           value={prompt}
           onChange={(e) => {
             if (suggestion) {
               setSuggestion(null);
             }
+            if (listening) {
+              promptBeforeDictation.current = e.target.value;
+              resetTranscript();
+            }
             setPrompt(e.target.value);
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !isLoading && prompt.trim()) {
               e.preventDefault();
-              suggestion ? onConfirm() : onSubmitPrompt(prompt);
+              if (suggestion) {
+                onConfirm();
+              } else {
+                onSubmitPrompt(prompt);
+              }
             }
           }}
         />
       </div>
       <div className="flex-gap justify-end px-2 py-2">
         <div className="flex items-center justify-end gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={onClear}>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={onClear}
+            disabled={isLoading}
+          >
             Clear
           </Button>
           <div>
@@ -202,33 +282,46 @@ export default function PromptForm({ preview }: { preview?: boolean }) {
               <Button
                 type="button"
                 size="sm"
-                variant="secondary"
-                disabled={!isMicrophoneAvailable}
+                variant={listening ? 'default' : 'secondary'}
                 onClick={toggleListening}
-                title={
-                  listening ? 'Stop voice input' : 'Start voice input'
-                }
+                title={listening ? 'Stop voice input' : 'Start voice input'}
+                aria-label={listening ? 'Stop voice input' : 'Start voice input'}
+                disabled={isLoading}
               >
-                {listening ? (
-                  <Icons.Mic className="w-4 h-4" />
-                ) : (
-                  <Icons.MicOff className="w-4 h-4" />
-                )}
+                <Icons.Mic
+                  className={`w-4 h-4 ${listening ? 'animate-pulse' : ''}`}
+                />
               </Button>
             )}
           </div>
           <Button
             onClick={() => {
-              suggestion ? onConfirm() : onSubmitPrompt(prompt);
+              if (suggestion) {
+                onConfirm();
+              } else {
+                onSubmitPrompt(prompt);
+              }
             }}
             type="button"
             size="sm"
-            disabled={isLoading || (!suggestion && !prompt.trim())}
+            disabled={sendDisabled}
+            loading={isLoading}
           >
             {suggestion ? 'Use Suggestion' : 'Send Prompt'}
           </Button>
         </div>
       </div>
+      {!browserSupportsSpeechRecognition && (
+        <p className="px-3 pb-3 text-xs text-muted-foreground">
+          Voice input needs a Chromium-based browser (Chrome/Edge) or Safari.
+        </p>
+      )}
+      {browserSupportsSpeechRecognition && isMicrophoneAvailable === false && (
+        <p className="px-3 pb-3 text-xs text-destructive">
+          Microphone access is blocked. Allow it in your browser settings to
+          use voice input.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,7 +1,6 @@
-/* eslint-disable no-useless-catch */
-import { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
 import { api } from '@/lib/api';
-import { Task, TaskEntry } from '@/types';
+import type { Task, TaskEntry } from '@/types';
 import { SearchParamsOptions, queryParamsMapping } from '@/lib/util/filter';
 
 interface TaskLabelRelation {
@@ -10,92 +9,57 @@ interface TaskLabelRelation {
 }
 
 export const TaskService = {
-  createTask: async (task: TaskEntry) => {
-    try {
-      const response: AxiosResponse<Task> = await api.post('/tasks', task);
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+  createTask: async (task: TaskEntry): Promise<Task> => {
+    const response: AxiosResponse<Task> = await api.post('/tasks', task);
+    return response.data;
   },
-  // Define default value for the entire argument using Partial
+
   getTasks: async (
     params: Partial<SearchParamsOptions> = {},
   ): Promise<Task[]> => {
-    try {
-      const queryParams: { [key: string]: string | boolean | number } = {};
+    const queryParams: Record<string, string | boolean | number> = {};
 
-      // Loop through each [param, queryParam] pair in the queryParamsMapping object
-      // eslint-disable-next-line no-restricted-syntax
-      for (const [param, queryParam] of Object.entries(queryParamsMapping)) {
-        // Extract the value of the current parameter from the params object
-        const paramValue = params[param as keyof SearchParamsOptions];
+    Object.entries(queryParamsMapping).forEach(([param, queryParam]) => {
+      const paramValue = params[param as keyof SearchParamsOptions];
 
-        // Check if the extracted parameter value is not undefined
-        if (paramValue !== undefined) {
-          // Assign the non-undefined parameter value to the corresponding property in the queryParams object
-          queryParams[queryParam] = paramValue;
-        }
+      if (paramValue !== undefined) {
+        queryParams[queryParam] = paramValue;
       }
+    });
 
-      const response: AxiosResponse = await api.get('/tasks', {
-        params: queryParams,
-      });
+    const response: AxiosResponse<Task[]> = await api.get('/tasks', {
+      params: queryParams,
+    });
 
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+    return response.data;
   },
+
   getTask: async (taskId: string): Promise<Task> => {
-    try {
-      const response: AxiosResponse = await api.get(`/tasks/${taskId}`);
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+    const response: AxiosResponse<Task> = await api.get(`/tasks/${taskId}`);
+    return response.data;
   },
-  updateTask: async (taskId: string, updatedTask: TaskEntry): Promise<Task> => {
-    try {
-      const response: AxiosResponse = await api.patch(
-        `/tasks/${taskId}`,
-        updatedTask,
-      );
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+
+  updateTask: async (
+    taskId: string,
+    updatedTask: Partial<TaskEntry>,
+  ): Promise<Task> => {
+    const response: AxiosResponse<Task> = await api.patch(
+      `/tasks/${taskId}`,
+      updatedTask,
+    );
+    return response.data;
   },
+
   deleteTask: async (taskId: string): Promise<Task> => {
-    try {
-      const response: AxiosResponse = await api.delete(`/tasks/${taskId}`);
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+    const response: AxiosResponse<Task> = await api.delete(`/tasks/${taskId}`);
+    return response.data;
   },
+
   addLabel: async ({ taskId, labelId }: TaskLabelRelation): Promise<void> => {
-    try {
-      const response: AxiosResponse = await api.post(
-        `/tasks/${taskId}/labels/${labelId}`,
-        null,
-      );
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+    await api.post(`/tasks/${taskId}/labels/${labelId}`, null);
   },
-  removeLabel: async ({
-    labelId,
-    taskId,
-  }: TaskLabelRelation): Promise<void> => {
-    try {
-      const response: AxiosResponse = await api.delete(
-        `/tasks/${taskId}/labels/${labelId}`,
-      );
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+
+  removeLabel: async ({ taskId, labelId }: TaskLabelRelation): Promise<void> => {
+    await api.delete(`/tasks/${taskId}/labels/${labelId}`);
   },
 };

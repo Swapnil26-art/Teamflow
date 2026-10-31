@@ -3,13 +3,11 @@ import Image from 'next/image';
 import { AlarmClockIcon, ZapIcon } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import KeyboardShortCuts from '@/public/keyboard-shortcuts.gif';
 import { cn } from '@/lib/util/tw-merge';
 import { FadeOnView } from '../_components/fade-on-view';
 import TaskFormPreview from '../_components/task-form-preview';
 import PromptFormPreview from '../_components/prompt-form-preview';
 import TypewriterEffect from '../_components/typewriter-effect';
-import Blur1 from '@/public/static/bg-blur-1.webp';
 
 function FeatureCard({
   children,
@@ -36,9 +34,12 @@ export default function Features() {
   return (
     <section className="px-6 max-w-screen-lg mx-auto mt-12 relative">
       <Image
-        src={Blur1}
-        alt="background blur"
-        className="opacity-20 absolute -translate-y-1/4"
+        src="/static/bg-blur-1.webp"
+        alt=""
+        width={900}
+        height={900}
+        aria-hidden
+        className="opacity-20 absolute -translate-y-1/4 pointer-events-none"
       />
       <div className="text-center mb-12">
         <FadeOnView>
@@ -113,7 +114,13 @@ export default function Features() {
         <div className="md:grid md:grid-cols-3 gap-6 space-y-6 md:space-y-0">
           <FadeOnView className="col-span-1 hidden lg:block">
             <FeatureCard className="flex-center flex-col p-0 overflow-hidden h-full">
-              <Image src={KeyboardShortCuts} alt="Keyboard shortcuts" />
+              <Image
+                src="/keyboard-shortcuts.gif"
+                alt="Keyboard shortcuts"
+                width={600}
+                height={400}
+                unoptimized
+              />
             </FeatureCard>
           </FadeOnView>
           <FadeOnView className="col-span-3 lg:col-span-2">

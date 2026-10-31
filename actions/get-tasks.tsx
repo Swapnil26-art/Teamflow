@@ -1,64 +1,75 @@
-import { startOfDay, addDays, parseISO } from 'date-fns';
+import { addDays } from 'date-fns';
+import { Prisma } from '@prisma/client';
+
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { SearchParamsOptions } from '@/lib/util/filter';
+import { getDayRange, toDateKey } from '@/lib/util/date';
+import { isNextDynamicError } from '@/lib/util/next-error';
+import { getTodayKey } from '@/lib/util/timezone';
 
 export const getTasks = async (options?: SearchParamsOptions) => {
   try {
     const session = await auth();
 
-    if (!session || !session.user) {
+    if (!session?.user?.id) {
       return null;
     }
 
-    const today = startOfDay(new Date());
-    const tomorrow = startOfDay(addDays(new Date(), 1));
+    const where: Prisma.TaskWhereInput = { userId: session.user.id };
 
-    let dueDateRange;
+    let dueDateRange: Prisma.DateTimeFilter | undefined;
 
     if (options?.today) {
-      dueDateRange = {
-        gte: today.toISOString(),
-        lt: tomorrow.toISOString(),
-      };
+      dueDateRange = getDayRange(getTodayKey());
     } else if (options?.dueDate) {
-      const customDate = parseISO(options.dueDate);
-      if (!Number.isNaN(customDate.getTime())) {
-        const dayStart = startOfDay(customDate);
-        dueDateRange = {
-          gte: dayStart.toISOString(),
-          lt: startOfDay(addDays(dayStart, 1)).toISOString(),
-        };
+      const dateKey = toDateKey(options.dueDate);
+
+      if (dateKey) {
+        dueDateRange = getDayRange(dateKey);
       }
+    } else if (options?.upcoming) {
+      const today = new Date(`${getTodayKey()}T00:00:00.000Z`);
+      dueDateRange = { gte: today, lt: addDays(today, 7) };
+    } else if (options?.overdue) {
+      const today = new Date(`${getTodayKey()}T00:00:00.000Z`);
+      dueDateRange = { lt: today };
     }
 
-    let listIdFilter: string | null | undefined;
     if (options?.unsorted) {
-      listIdFilter = null;
+      where.listId = null;
     } else if (options?.listId) {
-      listIdFilter = options.listId;
+      where.listId = options.listId;
+    }
+
+    if (options?.labelId) {
+      where.labels = { some: { id: options.labelId } };
+    }
+
+    if (dueDateRange) {
+      where.dueDate = dueDateRange;
+    }
+
+    if (options?.completed) {
+      where.isComplete = true;
+    } else if (options?.incomplete) {
+      where.isComplete = false;
     }
 
     const tasks = await db.task.findMany({
-      where: {
-        userId: session.user?.id,
-        ...(listIdFilter !== undefined ? { listId: listIdFilter } : {}),
-        ...(dueDateRange ? { dueDate: dueDateRange } : {}),
-        ...(options?.labelId ? { labels: { some: { id: options.labelId } } } : {}),
-        ...(options?.completed ? { isComplete: true } : {}),
-        ...(options?.incomplete ? { isComplete: false } : {}),
-      },
+      where,
       include: {
         subtasks: true,
         labels: true,
       },
-      orderBy: {
-        order: 'asc',
-      },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     });
 
     return tasks;
-  } catch {
+  } catch (error) {
+    if (isNextDynamicError(error)) throw error;
+
+    console.error('[GET_TASKS]', error);
     return null;
   }
 };

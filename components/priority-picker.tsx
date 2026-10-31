@@ -37,6 +37,7 @@ export function PriorityItem({
     <Button
       onClick={() => onSelect(priority.value)}
       variant="ghost"
+      type="button"
       className="w-full justify-start px-2 h-8"
     >
       <Icons.Flag className="w-4 h-4 mr-2" style={{ color: priority.color }} />
@@ -65,43 +66,26 @@ interface PriorityPickerProps<T extends FieldValues> {
 export function PriorityPicker<T extends FieldValues>({
   variant,
   defaultValue,
-  // eslint-disable-next-line no-unused-vars
   small = false,
 }: PriorityPickerProps<T>) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState(defaultValue);
+  const [value, setValue] = React.useState<TaskPriority | null>(
+    defaultValue ?? null,
+  );
   const [, setIsLoading] = React.useState(false);
   const router = useRouter();
 
-  const onSelect = async (priority: TaskPriority) => {
-    setOpen(false);
-    setValue(priority);
+  React.useEffect(() => {
+    setValue(defaultValue ?? null);
+  }, [defaultValue]);
 
-    if ('form' in variant) {
-      const { form, register } = variant as FormVariant<T>;
-      form.setValue(register, priority as PathValue<T, Path<T>>);
-    }
+  const updateTask = async (priority: TaskPriority | null) => {
+    if (!('task' in variant)) return;
 
-    if ('task' in variant) {
-      const { task } = variant as TaskVariant;
-      setIsLoading(true);
-      try {
-        await TaskService.updateTask(task.id, { ...task, priority });
-        toast.success('Changes saved.');
-        router.refresh();
-      } catch (err) {
-        handleError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  const removePriority = async (task: Task) => {
     setIsLoading(true);
     try {
-      await TaskService.updateTask(task.id, { ...task, priority: null });
-      toast.success('Priority removed.');
+      await TaskService.updateTask(variant.task.id, { priority });
+      toast.success(priority ? 'Priority updated.' : 'Priority removed.');
       router.refresh();
     } catch (err) {
       handleError(err);
@@ -110,19 +94,36 @@ export function PriorityPicker<T extends FieldValues>({
     }
   };
 
-  const onRemove = async () => {
+  const onSelect = async (priority: TaskPriority) => {
     setOpen(false);
-    setValue(undefined);
+    setValue(priority);
 
     if ('form' in variant) {
-      const { form, register } = variant as FormVariant<T>;
-      form.unregister(register);
+      variant.form.setValue(
+        variant.register,
+        priority as PathValue<T, Path<T>>,
+        { shouldDirty: true, shouldValidate: true },
+      );
     }
 
-    if ('task' in variant) {
-      const { task } = variant as TaskVariant;
-      await removePriority(task);
+    await updateTask(priority);
+  };
+
+  const onRemove = async () => {
+    setOpen(false);
+    setValue(null);
+
+    if ('form' in variant) {
+      // Set the field to `null` instead of unregistering it: the API needs
+      // an explicit `null` to clear the priority on an existing task.
+      variant.form.setValue(
+        variant.register,
+        null as PathValue<T, Path<T>>,
+        { shouldDirty: true },
+      );
     }
+
+    await updateTask(null);
   };
 
   const priority = priorities.find((p) => p.value === value);
@@ -130,18 +131,20 @@ export function PriorityPicker<T extends FieldValues>({
   if ('task' in variant) {
     return (
       <div>
-        {priorities.map((priority) => (
+        {priorities.map((item) => (
           <Button
-            key={priority.value}
+            key={item.value}
             size="sm"
-            variant={value === priority.value ? 'secondary' : 'ghost'}
-            onClick={() => onSelect(priority.value)}
+            type="button"
+            variant={value === item.value ? 'secondary' : 'ghost'}
+            onClick={() => onSelect(item.value)}
           >
-            <Icons.Flag className="w-4 h-4" style={{ color: priority.color }} />
+            <Icons.Flag className="w-4 h-4" style={{ color: item.color }} />
           </Button>
         ))}
         <Button
           size="sm"
+          type="button"
           variant={value ? 'ghost' : 'secondary'}
           onClick={onRemove}
         >
@@ -155,12 +158,13 @@ export function PriorityPicker<T extends FieldValues>({
     <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger
         aria-expanded={open}
+        type="button"
         className={cn(buttonVariants({ variant: 'outline' }), 'w-fit gap-2')}
       >
         <Icons.Flag className="w-4 h-4" style={{ color: priority?.color }} />
-        {value && (
+        {value ? (
           <span className="flex-gap">
-            {value}
+            {priority?.label ?? value}
             <Icons.Close
               className="w-4 h-4"
               onClick={(e) => {
@@ -169,19 +173,18 @@ export function PriorityPicker<T extends FieldValues>({
               }}
             />
           </span>
+        ) : (
+          !small && <span className="text-muted-foreground">Priority</span>
         )}
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-1">
-        {priorities.map((priority) => (
-          <PriorityItem
-            key={priority.value}
-            priority={priority}
-            onSelect={onSelect}
-          />
+        {priorities.map((item) => (
+          <PriorityItem key={item.value} priority={item} onSelect={onSelect} />
         ))}
         <Button
           onClick={onRemove}
           variant="ghost"
+          type="button"
           className="w-full justify-start px-2 h-8"
         >
           <Icons.Flag className="w-4 h-4 mr-2" />

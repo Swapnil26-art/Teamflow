@@ -13,8 +13,16 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { fetcher, LABELS_KEY, LISTS_KEY } from '@/lib/api';
 
 export default function TaskOverlay() {
-  const { data: lists, error: listsError } = useSWR<List[]>(LISTS_KEY, fetcher);
-  const { data: labels, error: labelsError } = useSWR<Label[]>(LABELS_KEY, fetcher);
+  const {
+    data: lists,
+    error: listsError,
+    mutate: mutateLists,
+  } = useSWR<List[]>(LISTS_KEY, fetcher);
+  const {
+    data: labels,
+    error: labelsError,
+    mutate: mutateLabels,
+  } = useSWR<Label[]>(LABELS_KEY, fetcher);
   const { showTaskOverlay, toggleTaskOverlay, setTaskOverlay } =
     useLayoutStore();
   const { task, clearTask } = useTaskStore();
@@ -35,32 +43,43 @@ export default function TaskOverlay() {
     return () => document.removeEventListener('keydown', down);
   }, [toggleTaskOverlay, clearTask]);
 
+  const retry = () => {
+    mutateLists();
+    mutateLabels();
+  };
+
+  const formKey = `${showTaskOverlay ? 'open' : 'closed'}-${task?.id ?? 'new'}`;
+
+  const content = (
+    <>
+      {isLoading && (
+        <p className="text-sm mt-4">Loading lists and labels...</p>
+      )}
+      {hasFetchError && (
+        <p className="text-error text-sm mt-4">
+          Failed to load lists and labels. Please{' '}
+          <button type="button" onClick={retry} className="text-error underline">
+            refresh
+          </button>{' '}
+          to try again.
+        </p>
+      )}
+      {!isLoading && !hasFetchError && (
+        <TaskForm
+          key={formKey}
+          lists={lists || []}
+          labels={labels || []}
+          task={task || undefined}
+        />
+      )}
+    </>
+  );
+
   if (isDesktop) {
     return (
-      <Dialog open={showTaskOverlay} onOpenChange={toggleTaskOverlay} modal>
+      <Dialog open={showTaskOverlay} onOpenChange={setTaskOverlay} modal>
         <DialogContent className="max-w-xl h-fit overflow-y-auto max-h-screen">
-          {isLoading && (
-            <p className="text-sm mt-4">Loading lists and labels...</p>
-          )}
-          {hasFetchError && (
-            <p className="text-error text-sm mt-4">
-              Failed to load lists and labels. Please <button
-                type="button"
-                onClick={() => toggleTaskOverlay()}
-                className="text-error underline"
-              >
-                refresh
-              </button>
-              to try again.
-            </p>
-          )}
-          {(!isLoading && !hasFetchError) && (
-            <TaskForm
-              lists={lists || []}
-              labels={labels || []}
-              task={task || undefined}
-            />
-          )}
+          {content}
         </DialogContent>
       </Dialog>
     );
@@ -74,30 +93,7 @@ export default function TaskOverlay() {
   return (
     <Drawer open={showTaskOverlay} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <div className="max-h-screen overflow-y-auto">
-          {isLoading && (
-            <p className="text-sm mt-4">Loading lists and labels...</p>
-          )}
-          {hasFetchError && (
-            <p className="text-error text-sm mt-4">
-              Failed to load lists and labels. Please <button
-                type="button"
-                onClick={() => toggleTaskOverlay()}
-                className="text-error underline"
-              >
-                refresh
-              </button>
-              to try again.
-            </p>
-          )}
-          {(!isLoading && !hasFetchError) && (
-            <TaskForm
-              lists={lists || []}
-              labels={labels || []}
-              task={task || undefined}
-            />
-          )}
-        </div>
+        <div className="max-h-screen overflow-y-auto">{content}</div>
       </DrawerContent>
     </Drawer>
   );

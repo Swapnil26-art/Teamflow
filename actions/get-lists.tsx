@@ -1,20 +1,22 @@
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { isNextDynamicError } from '@/lib/util/next-error';
 
 export const getLists = async () => {
   try {
     const session = await auth();
 
-    if (!session || !session.user) {
+    if (!session?.user?.id) {
       return null;
     }
 
-    const lists = await db.list.findMany({
-      where: { userId: session.user?.id },
+    return await db.list.findMany({
+      where: { userId: session.user.id },
     });
+  } catch (error) {
+    if (isNextDynamicError(error)) throw error;
 
-    return lists;
-  } catch {
+    console.error('[GET_LISTS]', error);
     return null;
   }
 };

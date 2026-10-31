@@ -84,7 +84,7 @@ function ListForm({ list, onClose }: FormProps) {
         {list && (
           <AlertModal
             isOpen={isOpen}
-            description="All tasks in this list will be deleted."
+            description="Tasks in this list will be moved to Inbox."
             onClose={closeDialog}
             onConfirm={() => onDelete(list.id)}
             loading={isLoading}

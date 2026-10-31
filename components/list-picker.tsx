@@ -19,30 +19,25 @@ interface ListPickerProps<T extends FieldValues> {
   form: UseFormReturn<T>;
   register: Path<T>;
   lists: List[];
-  defaultValue?: string | null;
 }
 
 export function ListPicker<T extends FieldValues>({
   form,
-  defaultValue,
   register,
   lists,
 }: ListPickerProps<T>) {
-  const defaultListValue = lists.find((l) => l.id === defaultValue)?.name;
-
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState(defaultListValue);
+  const selectedListId = form.watch(register) as string | null | undefined;
+  const selectedList = lists.find((list) => list.id === selectedListId);
 
   const onSelect = (list?: List) => {
-    if (list) {
-      setValue(list.name === value ? '' : list.name);
-      setOpen(false);
-      form.setValue(register, list.id as PathValue<T, Path<T>>);
-    } else {
-      setValue('Inbox');
-      setOpen(false);
-      form.unregister(register);
-    }
+    setOpen(false);
+
+    // Always write the field so "Inbox" (null) can clear an existing list.
+    form.setValue(register, (list?.id ?? null) as PathValue<T, Path<T>>, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   return (
@@ -51,11 +46,12 @@ export function ListPicker<T extends FieldValues>({
         <Button
           variant="ghost"
           size="sm"
+          type="button"
           role="combobox"
           aria-expanded={open}
           className="w-fit justify-between"
         >
-          {value || 'Inbox'}
+          {selectedList?.name || 'Inbox'}
           <Icons.ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -66,7 +62,7 @@ export function ListPicker<T extends FieldValues>({
               <Icons.Check
                 className={cn(
                   'mr-2 h-4 w-4',
-                  value === 'Inbox' ? 'opacity-100' : 'opacity-0',
+                  !selectedList ? 'opacity-100' : 'opacity-0',
                 )}
               />
               Inbox
@@ -80,7 +76,7 @@ export function ListPicker<T extends FieldValues>({
                 <Icons.Check
                   className={cn(
                     'mr-2 h-4 w-4',
-                    value === item.name ? 'opacity-100' : 'opacity-0',
+                    selectedListId === item.id ? 'opacity-100' : 'opacity-0',
                   )}
                 />
                 {item.name}

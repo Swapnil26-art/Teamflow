@@ -57,22 +57,33 @@ export default function MentionInput<T extends FieldValues>({
     }));
 
   const onChange = (e: { target: { value: string } }) => {
-    setInput(e.target.value ?? '');
+    const nextValue = e.target.value ?? '';
+
+    setInput(nextValue);
     form.setValue(
       'name' as Path<T>,
-      extractName(e.target.value) as PathValue<T, Path<T>>,
+      extractName(nextValue) as PathValue<T, Path<T>>,
       { shouldValidate: true, shouldDirty: true },
     );
-    form.setValue(
-      'listId' as Path<T>,
-      extractListId(e.target.value) as PathValue<T, Path<T>>,
-      { shouldDirty: true },
-    );
-    form.setValue(
-      'labelIds' as Path<T>,
-      extractLabelIds(e.target.value) as PathValue<T, Path<T>>,
-      { shouldDirty: true },
-    );
+
+    // Only overwrite the picker values when the text actually contains a
+    // mention. Otherwise typing a task name would silently reset a list or
+    // labels that were chosen from the pickers below the input.
+    const mentionedListId = extractListId(nextValue);
+    if (mentionedListId !== undefined) {
+      form.setValue('listId' as Path<T>, mentionedListId as PathValue<T, Path<T>>, {
+        shouldDirty: true,
+      });
+    }
+
+    const mentionedLabelIds = extractLabelIds(nextValue);
+    if (mentionedLabelIds !== undefined) {
+      form.setValue(
+        'labelIds' as Path<T>,
+        mentionedLabelIds as PathValue<T, Path<T>>,
+        { shouldDirty: true },
+      );
+    }
   };
 
   return (

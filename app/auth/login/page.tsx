@@ -8,6 +8,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Icons } from '@/components/ui/icons';
 
 import AuthForm from '../auth-form';
+import type { SocialProvider } from '../socials-actions';
 
 export const metadata: Metadata = {
   title: 'Login',
@@ -15,6 +16,15 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
+  const socialProviders: SocialProvider[] = [];
+
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    socialProviders.push('google');
+  }
+  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    socialProviders.push('github');
+  }
+
   return (
     <div
       style={{
@@ -45,7 +55,7 @@ export default function LoginPage() {
               Ready to tackle your tasks? Just sign in below.
             </p>
           </div>
-          <AuthForm variant="login" />
+          <AuthForm variant="login" socialProviders={socialProviders} />
           <p className="px-8 text-center text-sm text-muted-foreground">
             <Link
               href="/auth/register"

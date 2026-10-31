@@ -6,19 +6,27 @@ import { Icons } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import { handleError } from '@/lib/util/error';
 
-export default function SocialsActions() {
-  const [isLoading, setIsLoading] = React.useState(false);
+export type SocialProvider = 'google' | 'github';
 
-  const loginSocial = (provider: 'google' | 'github') => {
-    setIsLoading(true);
+export default function SocialsActions({
+  providers,
+}: {
+  providers: SocialProvider[];
+}) {
+  const [isLoading, setIsLoading] = React.useState<SocialProvider | null>(null);
+
+  if (!providers.length) return null;
+
+  const loginSocial = async (provider: SocialProvider) => {
+    setIsLoading(provider);
     try {
-      signIn(provider, {
+      await signIn(provider, {
         callbackUrl: DEFAULT_LOGIN_REDIRECT,
       });
     } catch (error) {
       handleError(error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(null);
     }
   };
 
@@ -30,28 +38,32 @@ export default function SocialsActions() {
         <div className="w-full h-[1px] bg-border" />
       </div>
       <div className="flex-gap mt-4 gap-4">
-        <Button
-          type="button"
-          variant="secondary"
-          className="w-full"
-          disabled={isLoading}
-          loading={isLoading}
-          onClick={() => loginSocial('google')}
-        >
-          <Icons.Google className="w-4 h-4 mr-2" />
-          Google
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={isLoading}
-          loading={isLoading}
-          className="w-full"
-          onClick={() => loginSocial('github')}
-        >
-          <Icons.GitHub className="w-4 h-4 mr-2" />
-          GitHub
-        </Button>
+        {providers.includes('google') && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            disabled={isLoading !== null}
+            loading={isLoading === 'google'}
+            onClick={() => loginSocial('google')}
+          >
+            <Icons.Google className="w-4 h-4 mr-2" />
+            Google
+          </Button>
+        )}
+        {providers.includes('github') && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={isLoading !== null}
+            loading={isLoading === 'github'}
+            className="w-full"
+            onClick={() => loginSocial('github')}
+          >
+            <Icons.GitHub className="w-4 h-4 mr-2" />
+            GitHub
+          </Button>
+        )}
       </div>
     </div>
   );

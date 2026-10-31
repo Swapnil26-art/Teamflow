@@ -32,7 +32,8 @@ export async function POST(
     if (
       !existingTask ||
       existingTask.userId !== session.user.id ||
-      !existingLabel
+      !existingLabel ||
+      existingLabel.userId !== session.user.id
     ) {
       return new NextResponse('Task or Label not found', { status: 404 });
     }

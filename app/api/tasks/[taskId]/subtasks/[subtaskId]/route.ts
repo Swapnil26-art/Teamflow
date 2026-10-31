@@ -21,22 +21,41 @@ export async function PATCH(
 
     const existing = await db.subtask.findUnique({
       where: { id: params.subtaskId },
-      select: { userId: true },
+      select: { userId: true, taskId: true },
     });
 
-    if (!existing || existing.userId !== session.user.id) {
+    if (
+      !existing ||
+      existing.userId !== session.user.id ||
+      existing.taskId !== params.taskId
+    ) {
       return new NextResponse('Unauthorized', { status: 403 });
     }
 
     const { name, isComplete } = await req.json();
+
+    if (
+      name !== undefined &&
+      (typeof name !== 'string' || !name.trim())
+    ) {
+      return new NextResponse('Subtask name is required', { status: 400 });
+    }
+
+    if (isComplete !== undefined && typeof isComplete !== 'boolean') {
+      return new NextResponse('Invalid completion state', { status: 400 });
+    }
+
+    if (name === undefined && isComplete === undefined) {
+      return new NextResponse('Nothing to update', { status: 400 });
+    }
 
     const subtask = await db.subtask.update({
       where: {
         id: params.subtaskId,
       },
       data: {
-        name,
-        isComplete,
+        ...(name !== undefined ? { name: name.trim() } : {}),
+        ...(isComplete !== undefined ? { isComplete } : {}),
       },
     });
 
@@ -65,10 +84,14 @@ export async function DELETE(
 
     const existing = await db.subtask.findUnique({
       where: { id: params.subtaskId },
-      select: { userId: true },
+      select: { userId: true, taskId: true },
     });
 
-    if (!existing || existing.userId !== session.user.id) {
+    if (
+      !existing ||
+      existing.userId !== session.user.id ||
+      existing.taskId !== params.taskId
+    ) {
       return new NextResponse('Unauthorized', { status: 403 });
     }
 

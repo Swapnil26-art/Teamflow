@@ -50,12 +50,11 @@ function SubtaskForm({
     try {
       if (subtask) {
         await SubtaskService.updateSubtask(task.id, subtask.id, {
-          ...subtask,
           name: data.name,
         });
         toast.success('Subtask updated!');
       } else {
-        await SubtaskService.createSubtask(task.id, data);
+        await SubtaskService.createSubtask(task.id, { name: data.name });
         toast.success('Subtask created!');
       }
       router.refresh();

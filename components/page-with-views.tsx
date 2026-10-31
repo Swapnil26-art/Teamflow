@@ -1,5 +1,3 @@
-'use server';
-
 import * as React from 'react';
 
 import { ExtendedSearchParamsOptions } from '@/lib/util/filter';

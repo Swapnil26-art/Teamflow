@@ -6,9 +6,11 @@ import toast from 'react-hot-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { parseISO } from 'date-fns';
+import { startOfDay } from 'date-fns';
+
 import { useLayoutStore } from '@/store/layout-store';
 import { handleError } from '@/lib/util/error';
+import { localDateKey, storedToLocalDate } from '@/lib/util/date';
 import type { Label, List, Task } from '@/types';
 import { TaskService } from '@/services/task-service';
 import { taskFormSchema, TaskFormValues } from '@/lib/validations/task-schema';
@@ -47,95 +49,65 @@ export default function TaskForm({
   const { closeTaskOverlay } = useLayoutStore();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const params = useParams<{ listId: string }>();
+  const params = useParams<{ listId?: string }>();
   const path = usePathname();
   const router = useRouter();
 
-  const defaultValues: Partial<TaskFormValues> = {
-    name: task?.name || undefined,
-    description: task?.description || undefined,
-    dueDate: (() => {
-      if (task?.dueDate) {
-        return task.dueDate;
-      }
-      if (path === '/today') {
-        return new Date();
-      }
-      if (initialValues?.dueDate) {
-        return parseISO(initialValues.dueDate);
-      }
-      return undefined;
-    })(),
-    priority: task?.priority || undefined,
-    listId: task?.listId || params.listId || undefined,
-    labelIds: (() => {
-      if (task?.labels) {
-        return task.labels.filter((label) => label.id).map((label) => label.id);
-      }
-      return undefined;
-    })(),
-  };
+  const initialDueDate = React.useMemo(() => {
+    if (task?.dueDate) {
+      return storedToLocalDate(task.dueDate);
+    }
+    if (path === '/today') {
+      return startOfDay(new Date());
+    }
+    if (initialValues?.dueDate) {
+      return storedToLocalDate(initialValues.dueDate);
+    }
+    return undefined;
+  }, [task?.dueDate, path, initialValues?.dueDate]);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues,
+    defaultValues: {
+      name: task?.name ?? '',
+      description: task?.description ?? '',
+      dueDate: initialDueDate ?? null,
+      priority: task?.priority ?? null,
+      listId: task?.listId ?? params?.listId ?? null,
+      labelIds: task?.labels?.map((label) => label.id) ?? [],
+    },
   });
 
-  // eslint-disable-next-line consistent-return
   const onSubmit = async (data: TaskFormValues) => {
     if (preview) {
       toast.success('Task created!');
       return;
     }
+
     setIsLoading(true);
+
     try {
+      const payload = {
+        name: data.name.trim(),
+        description: data.description?.trim() ? data.description.trim() : null,
+        // Send a calendar date (`yyyy-MM-dd`) so the server can store it
+        // without any timezone drift.
+        dueDate: data.dueDate ? localDateKey(data.dueDate as Date | string) : null,
+        priority: data.priority ?? null,
+        listId: data.listId ?? null,
+        labelIds: data.labelIds ?? [],
+      };
+
       if (task) {
-        await TaskService.updateTask(task.id, {
-          id: task.id,
-          ...data,
-          dueDate: data.dueDate as Date | null | undefined,
-        });
-
-        const labelsToAdd = labels.filter(
-          (label) =>
-            data.labelIds?.includes(label.id) &&
-            !task.labels?.some((tLabel) => tLabel.id === label.id),
-        );
-        const labelsToRemove =
-          task.labels?.filter(
-            (tLabel) => !data.labelIds?.includes(tLabel.id),
-          ) || [];
-
-        const addLabelPromises = labelsToAdd.map((label) =>
-          TaskService.addLabel({ taskId: task.id, labelId: label.id }),
-        );
-
-        const removeLabelPromises = labelsToRemove.map((label) =>
-          TaskService.removeLabel({ taskId: task.id, labelId: label.id }),
-        );
-
-        await Promise.all([...addLabelPromises, ...removeLabelPromises]);
-
+        await TaskService.updateTask(task.id, payload);
         toast.success('Task updated.');
       } else {
-        const createdTask = await TaskService.createTask({
-          ...data,
-          dueDate: (data.dueDate as Date | null | undefined) ?? undefined,
-        });
-
-        if (data.labelIds?.length) {
-          const labelPromises = data.labelIds.map((labelId) =>
-            TaskService.addLabel({ taskId: createdTask.id, labelId }),
-          );
-
-          await Promise.all(labelPromises);
-        }
-
+        await TaskService.createTask(payload);
         toast.success('Task created.');
       }
 
       router.refresh();
-      close && close();
+      close?.();
       closeTaskOverlay();
     } catch (err) {
       handleError(err);
@@ -144,18 +116,20 @@ export default function TaskForm({
     }
   };
 
-  // TODO: Figure out sharing and updates state fx. list and labels
-
   const nameValue = form.watch('name');
 
   const onCancel = () => {
-    close && close();
+    close?.();
     closeTaskOverlay();
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit, () =>
+          toast.error('Please enter a task name.'),
+        )}
+      >
         <div className="p-1">
           <MentionsInput
             form={form}
@@ -180,7 +154,7 @@ export default function TaskForm({
               form,
               register: 'dueDate',
             }}
-            defaultValue={defaultValues.dueDate}
+            defaultValue={initialDueDate}
             small={small}
           />
           <PriorityPicker
@@ -189,7 +163,7 @@ export default function TaskForm({
               form,
               register: 'priority',
             }}
-            defaultValue={defaultValues.priority}
+            defaultValue={form.watch('priority')}
             small={small}
           />
         </div>
@@ -200,7 +174,6 @@ export default function TaskForm({
               lists={lists}
               form={form}
               register="listId"
-              defaultValue={defaultValues.listId}
             />
           </div>
           <div className="flex-gap">
@@ -209,10 +182,16 @@ export default function TaskForm({
               size="sm"
               onClick={onCancel}
               type="button"
+              disabled={isLoading}
             >
               {small ? <Icons.Close className="w-4 h-4" /> : 'Cancel'}
             </Button>
-            <Button size="sm" type="submit" disabled={!nameValue || isLoading}>
+            <Button
+              size="sm"
+              type="submit"
+              disabled={!nameValue?.trim() || isLoading}
+              loading={isLoading}
+            >
               {(small && <Icons.Send className="w-4 h-4" />) ||
                 (task ? 'Save changes' : 'Create task')}
             </Button>

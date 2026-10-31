@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import toast from 'react-hot-toast';
 
 import { signIn } from 'next-auth/react';
@@ -27,11 +27,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthError } from './auth-error';
-import SocialsActions from './socials-actions';
+import SocialsActions, { SocialProvider } from './socials-actions';
 import { registerUser } from './register-user';
 
 interface AuthFormProps {
   variant: 'register' | 'login';
+  socialProviders?: SocialProvider[];
 }
 
 type AuthSchemaType = {
@@ -39,7 +40,7 @@ type AuthSchemaType = {
   register: RegisterFormValues;
 }[AuthFormProps['variant']];
 
-function AuthForm({ variant }: AuthFormProps) {
+function AuthFormInner({ variant, socialProviders = [] }: AuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -64,11 +65,20 @@ function AuthForm({ variant }: AuthFormProps) {
 
       if (variant === 'login') {
         const { email, password } = data as LoginFormValues;
-        await signIn('credentials', {
+        const result = await signIn('credentials', {
           email,
           password,
-          callbackUrl: DEFAULT_LOGIN_REDIRECT,
+          redirect: false,
         });
+
+        if (result?.error) {
+          toast.error('Wrong email or password.');
+          return;
+        }
+
+        toast.success('Welcome back!');
+        router.push(DEFAULT_LOGIN_REDIRECT);
+        router.refresh();
       } else if (variant === 'register') {
         const { email, name, password } = data as RegisterFormValues;
         const res = await registerUser({ email, name, password });
@@ -79,14 +89,14 @@ function AuthForm({ variant }: AuthFormProps) {
       }
     } catch (err) {
       if (err instanceof AxiosError) {
-        toast.error(err.response?.data);
+        toast.error(err.response?.data ?? 'Something went wrong.');
       } else if (err instanceof Error) {
         toast.error(err.message);
       } else {
         toast.error('Oops. Something went wrong.');
       }
       // eslint-disable-next-line no-console
-      console.log(err);
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -162,8 +172,21 @@ function AuthForm({ variant }: AuthFormProps) {
           {variant === 'login' ? 'Login' : 'Register'}
         </Button>
       </form>
-      {variant === 'login' && <SocialsActions />}
+      {variant === 'login' && !!socialProviders.length && (
+        <SocialsActions providers={socialProviders} />
+      )}
     </Form>
   );
 }
-export default AuthForm;
+
+/**
+ * `useSearchParams` needs a Suspense boundary during static generation,
+ * otherwise `next build` fails for /auth/login and /auth/register.
+ */
+export default function AuthForm(props: AuthFormProps) {
+  return (
+    <Suspense fallback={null}>
+      <AuthFormInner {...props} />
+    </Suspense>
+  );
+}

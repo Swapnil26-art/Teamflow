@@ -5,9 +5,11 @@ export type Task = PrismaTask & {
   subtasks?: Subtask[];
 };
 
-export type TaskEntry = Omit<Partial<PrismaTask>, 'dueDate'> & {
+export type TaskEntry = Omit<Partial<PrismaTask>, 'dueDate' | 'listId'> & {
   name: string;
   dueDate?: Date | string | null;
+  listId?: string | null;
+  labelIds?: string[] | null;
 };
 export type SubtaskEntry = Partial<Subtask> & { name: string };
 export type LabelEntry = Partial<Label> & { name: string };

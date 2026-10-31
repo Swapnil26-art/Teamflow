@@ -73,7 +73,7 @@ model Task {
   subtasks   Subtask[]
   
   user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  list       List? @relation(fields: [listId], references: [id])
+  list       List? @relation(fields: [listId], references: [id], onDelete: SetNull)
 }
 
 model List {
@@ -104,6 +104,6 @@ model Subtask {
   name         String
   isComplete  Boolean @default(false)
 
-  task Task @relation(fields: [taskId], references: [id])
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

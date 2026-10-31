@@ -2,7 +2,8 @@ import { format } from 'date-fns';
 
 import { Icons } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
-import { PromptTask } from '@/lib/util/open-ai';
+import type { PromptTask } from '@/lib/util/open-ai';
+import { storedToLocalDate } from '@/lib/util/date';
 
 import { priorities } from '@/components/priority-picker';
 import { Button } from './ui/button';
@@ -18,13 +19,8 @@ export default function TaskSuggestion({
     (p) => p.value === suggestion?.priority?.toUpperCase(),
   );
 
-  let dueDateLabel: string | null = null;
-  if (suggestion?.dueDate) {
-    const parsedDate = new Date(suggestion.dueDate);
-    if (!Number.isNaN(parsedDate.getTime())) {
-      dueDateLabel = format(parsedDate, 'dd MMMM, yyyy HH:mm');
-    }
-  }
+  const dueDate = storedToLocalDate(suggestion?.dueDate);
+  const dueDateLabel = dueDate ? format(dueDate, 'dd MMMM, yyyy') : null;
 
   return (
     // eslint-disable-next-line jsx-a11y/interactive-supports-focus

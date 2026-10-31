@@ -8,6 +8,7 @@ import Navbar from './_components/navbar';
 
 import LoadingScreen from '@/components/ui/loading';
 import OverlayProvider from '@/components/providers/overlay-provider';
+import TimezoneSync from '@/components/timezone-sync';
 
 interface PageProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export default async function Layout(props: PageProps) {
   return (
     <React.Suspense fallback={<LoadingScreen />}>
       <SessionProvider session={session}>
+        <TimezoneSync />
         <OverlayProvider />
         <div className="flex h-screen overflow-y-hidden overflow-x-hidden">
           <LeftSidebar />

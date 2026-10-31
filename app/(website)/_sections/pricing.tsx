@@ -5,7 +5,6 @@ import { Icons } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FadeOnView } from '../_components/fade-on-view';
-import Blur1 from '@/public/static/bg-blur-2.webp';
 
 function Feature({ feature }: { feature: string }) {
   return (
@@ -33,9 +32,12 @@ export default function Pricing() {
       </div>
       <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
         <Image
-          src={Blur1}
-          alt="background blur"
-          className="opacity-20 absolute -translate-y-1/3 sm:hidden"
+          src="/static/bg-blur-2.webp"
+          alt=""
+          width={900}
+          height={900}
+          aria-hidden
+          className="opacity-20 absolute -translate-y-1/3 sm:hidden pointer-events-none"
         />
         {/* Free Plan */}
         <FadeOnView

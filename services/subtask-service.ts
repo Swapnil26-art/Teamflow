@@ -1,7 +1,9 @@
 /* eslint-disable no-useless-catch */
 import { AxiosResponse } from 'axios';
 import { api } from '@/lib/api';
-import { Subtask, SubtaskEntry } from '@/types';
+import { SubtaskEntry } from '@/types';
+
+type SubtaskUpdate = Partial<SubtaskEntry>;
 
 export const SubtaskService = {
   createSubtask: async (
@@ -21,7 +23,7 @@ export const SubtaskService = {
   updateSubtask: async (
     taskId: string,
     subtaskId: string,
-    subtask: Subtask,
+    subtask: SubtaskUpdate,
   ): Promise<void> => {
     try {
       const response: AxiosResponse = await api.patch(

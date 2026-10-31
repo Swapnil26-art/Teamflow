@@ -25,6 +25,8 @@ import AlertModal from '@/components/modals/alert-modal';
 
 import type { Label, List, Task } from '@/types';
 import { useMounted } from '@/hooks/use-mounted';
+import { useLayoutStore } from '@/store/layout-store';
+import { useTaskStore } from '@/store/modal-store';
 import { TaskService } from '@/services/task-service';
 import { handleError } from '@/lib/util/error';
 
@@ -49,19 +51,22 @@ export default function TaskActions({
 
   const isMounted = useMounted();
   const router = useRouter();
+  const { toggleTaskOverlay } = useLayoutStore();
+  const { setTask } = useTaskStore();
+
+  const openInOverlay = () => {
+    setTask(task);
+    toggleTaskOverlay();
+  };
 
   const onEdit = () => {
     if (setOpen) setOpen();
-    else {
-      router.push(`/tasks/${task.id}`);
-    }
+    else openInOverlay();
   };
 
   const onOpenSubtasks = () => {
     if (openSubtasks) openSubtasks();
-    else {
-      router.push(`/tasks/${task.id}`);
-    }
+    else openInOverlay();
   };
 
   const onDelete = async (taskId: string) => {
@@ -82,8 +87,7 @@ export default function TaskActions({
   const onMoveTo = async (list: List) => {
     setIsLoading(true);
     try {
-      await TaskService.updateTask(task.id, { ...task, listId: list.id });
-
+      await TaskService.updateTask(task.id, { listId: list.id });
       router.refresh();
       toast.success(`Task has been moved to ${list.name}`);
     } catch (err) {
@@ -133,10 +137,7 @@ export default function TaskActions({
             <Icons.More className="w-3 h-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          onSelect={() => setIsOpen(false)}
-          className="w-48 overflow-y-auto"
-        >
+        <DropdownMenuContent className="w-48 overflow-y-auto">
           <DropdownMenuGroup>
             <DropdownMenuItem
               onClick={onEdit}
@@ -159,6 +160,9 @@ export default function TaskActions({
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent>
+                  {labels.length === 0 && (
+                    <DropdownMenuItem disabled>No labels yet</DropdownMenuItem>
+                  )}
                   {labels.map((label) => (
                     <DropdownMenuItem
                       onSelect={() => onSelectLabel(label.id)}
@@ -200,6 +204,23 @@ export default function TaskActions({
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setIsLoading(true);
+                      TaskService.updateTask(task.id, { listId: null })
+                        .then(() => {
+                          router.refresh();
+                          toast.success('Task moved to Inbox');
+                        })
+                        .catch(handleError)
+                        .finally(() => {
+                          setIsLoading(false);
+                          setIsOpen(false);
+                        });
+                    }}
+                  >
+                    Inbox
+                  </DropdownMenuItem>
                   {lists.map((list) => (
                     <DropdownMenuItem
                       onSelect={() => onMoveTo(list)}

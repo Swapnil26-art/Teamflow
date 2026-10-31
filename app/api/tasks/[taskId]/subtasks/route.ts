@@ -15,8 +15,17 @@ export async function POST(
 
     const { name } = await req.json();
 
-    if (!name) {
-      return new NextResponse('Bad Request', { status: 401 });
+    if (typeof name !== 'string' || !name.trim()) {
+      return new NextResponse('Bad Request', { status: 400 });
+    }
+
+    const task = await db.task.findFirst({
+      where: { id: params.taskId, userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!task) {
+      return new NextResponse('Task not found', { status: 404 });
     }
 
     const lastSubtask = await db.subtask.findFirst({
@@ -30,7 +39,7 @@ export async function POST(
       data: {
         userId: session.user.id,
         taskId: params.taskId,
-        name,
+        name: name.trim(),
         order,
       },
     });

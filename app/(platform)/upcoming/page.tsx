@@ -1,10 +1,8 @@
 import {
-  startOfWeek,
+  startOfDay,
+  addDays,
   addWeeks,
   format,
-  getDay,
-  addDays,
-  startOfMonth,
   isToday,
   isTomorrow,
 } from 'date-fns';
@@ -22,43 +20,48 @@ interface UpcomingPageProps {
   searchParams: Partial<ExtendedSearchParamsOptions>;
 }
 
+interface DayData {
+  day: Date;
+  formattedDate: string;
+  tasks: Task[];
+}
+
 export default async function UpcomingPage({
   searchParams,
 }: UpcomingPageProps) {
   const labels = (await getLabels()) || [];
   const lists = (await getLists()) || [];
 
-  const offset = searchParams.offset ?? 0;
-  const currentDayOfWeek = getDay(new Date());
-  const startOfSelectedWeek = startOfWeek(new Date(), {
-    weekStartsOn: currentDayOfWeek,
-  });
-  const startDate = addWeeks(startOfSelectedWeek, offset);
-  const currentMonth = format(startOfMonth(startDate), 'MMMM yyyy');
+  const parsedOffset = Number(searchParams.offset);
+  const offset = Number.isFinite(parsedOffset) ? parsedOffset : 0;
 
-  const days = await Promise.all(
+  // The Upcoming view always starts from today and pages forward one week
+  // at a time. Using startOfDay keeps the date buckets aligned with how
+  // tasks are stored (local midnight of the selected day).
+  const startDate = startOfDay(addWeeks(new Date(), offset));
+
+  const days: DayData[] = await Promise.all(
     Array.from({ length: 7 }, async (_, index) => {
       const day = addDays(startDate, index);
       const formattedDate = format(day, 'yyyy-MM-dd');
 
-      const tasks = await getTasks({
-        ...searchParams,
-        dueDate: formattedDate,
-      });
+      const tasks =
+        (await getTasks({
+          ...searchParams,
+          offset: undefined,
+          dueDate: formattedDate,
+        })) || [];
 
       return { day, formattedDate, tasks };
     }),
   );
 
-  function ColumnHeader({
-    dayData,
-  }: {
-    dayData: {
-      day: Date;
-      formattedDate: string;
-      tasks: Task[];
-    };
-  }) {
+  const monthLabels = Array.from(
+    new Set(days.map(({ day }) => format(day, 'MMMM yyyy'))),
+  );
+  const currentMonth = monthLabels.join(' – ');
+
+  function ColumnHeader({ dayData }: { dayData: DayData }) {
     const getDisplayDate = (day: Date): string => {
       if (isToday(day)) {
         return 'Today';
@@ -87,7 +90,7 @@ export default async function UpcomingPage({
         <PageHeading>{currentMonth}</PageHeading>
         <FilterWeek />
       </div>
-      <div className="flex gap-4 sm:max-w-xs">
+      <div className="flex gap-4 overflow-x-auto pb-4">
         {days.map((dayData) => (
           <div key={dayData.formattedDate} className="min-w-[250px] space-y-4">
             <ColumnHeader dayData={dayData} />
@@ -105,6 +108,7 @@ export default async function UpcomingPage({
                 lists={lists}
                 labels={labels}
                 date={dayData.formattedDate}
+                type="board"
               />
             </div>
           </div>

@@ -15,7 +15,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/util/tw-merge';
 import { buttonVariants } from '@/components/ui/button';
 import { FadeOnView } from '../_components/fade-on-view';
-import Blur2 from '@/public/static/bg-blur-2.webp';
 
 interface Feature {
   title: string;
@@ -61,9 +60,12 @@ export default function AdditionalFeatures() {
   return (
     <div className="max-w-screen-lg space-y-12 mx-auto px-6 flex flex-col justify-center text-center relative">
       <Image
-        src={Blur2}
-        alt="background blur"
-        className="opacity-20 absolute"
+        src="/static/bg-blur-2.webp"
+        alt=""
+        width={900}
+        height={900}
+        aria-hidden
+        className="opacity-20 absolute pointer-events-none"
       />
       <div className="grid gap-8 grid-cols-1 md:grid-cols-3 sm:grid-cols-2 mt-12">
         {features.map(({ title, description, icon: Icon }) => (
