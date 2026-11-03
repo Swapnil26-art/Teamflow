@@ -49,7 +49,7 @@ export default function LoginPage() {
           <div className="flex flex-col space-y-2 text-center">
             <Icons.Logo className="mx-auto h-6 w-6" />
             <h1 className="text-xl font-semibold tracking-tight">
-              Login to Taskify
+              Login to Teamflow
             </h1>
             <p className="text-sm text-muted-foreground">
               Ready to tackle your tasks? Just sign in below.

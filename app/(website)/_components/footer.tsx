@@ -3,7 +3,7 @@ import { Icons } from '@/components/ui/icons';
 const footer = () => (
   <footer className="px-6 dark:bg-[#00021242] bg-opacity-50">
     <div className="py-10 max-w-screen-lg mx-auto flex-between">
-      <div className="font-semibold text-lg">taskify</div>
+      <div className="font-semibold text-lg">Teamflow</div>
       <div>
         <Icons.GitHub className="w-4 h-4 text-muted-foreground ml-auto" />
       </div>
@@ -16,7 +16,7 @@ const footer = () => (
         <div>Terms of Conditions</div>
       </div>
       <div className="text-xs text-muted-foreground">
-        © 2024 Taskify. All rights reserved.
+        © 2024 Teamflow. All rights reserved.
       </div>
     </div>
   </footer>
