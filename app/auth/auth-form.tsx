@@ -7,7 +7,7 @@ import { signIn } from 'next-auth/react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { DEFAULT_LOGIN_REDIRECT } from '@/routes';
 import {
   LoginFormValues,
@@ -43,7 +43,6 @@ type AuthSchemaType = {
 function AuthFormInner({ variant, socialProviders = [] }: AuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const searchParams = useSearchParams();
-  const router = useRouter();
   const urlError = searchParams.get('error');
   let errorMessage = '';
 
@@ -77,14 +76,15 @@ function AuthFormInner({ variant, socialProviders = [] }: AuthFormProps) {
         }
 
         toast.success('Welcome back!');
-        router.push(DEFAULT_LOGIN_REDIRECT);
-        router.refresh();
+        // Hard navigation avoids stale RSC/chunk errors after deployments.
+        window.location.assign(DEFAULT_LOGIN_REDIRECT);
       } else if (variant === 'register') {
         const { email, name, password } = data as RegisterFormValues;
         const res = await registerUser({ email, name, password });
         if (res?.success) {
           toast.success('Successfully registered. You can now log in.');
-          router.push('/auth/login');
+          // Hard navigation avoids stale RSC/chunk errors after deployments.
+          window.location.assign('/auth/login');
         }
       }
     } catch (err) {
